@@ -18,6 +18,8 @@ public static class Logger<T>
             {
                 File.Create(LOG_PATH).Close();
             }
+
+            Log("Auto-Suspend started.", LogLevel.Info);
             return true;
         }
         catch (IOException e)
