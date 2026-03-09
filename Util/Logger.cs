@@ -6,8 +6,10 @@ public static class Logger<T>
     {
         string log = $"[{DateTime.Now}]\t[{level}]\t[{typeof(T).Name}]\t{message}";
         File.AppendAllText(LOG_PATH, log + Environment.NewLine);
+        Console.WriteLine(log);
     }
 
+    // This ensures that the Log file exists and it is the first method called by Auto-Suspend.
     public static bool InitializeLog()
     {
         try
