@@ -1,2 +1,8 @@
-﻿// See https://aka.ms/new-console-template for more information
-Console.WriteLine("Hello, World!");
+﻿public class AutoSuspend
+{
+    static void Main(String[] args)
+    {
+        Console.WriteLine("Hello, World!");
+        Logger<AutoSuspend>.Log("Program completed line 5 of program.cs", LogLevel.Info);
+    }
+}
