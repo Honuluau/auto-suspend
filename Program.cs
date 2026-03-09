@@ -1,11 +1,14 @@
 ﻿using System.Collections.Concurrent;
+using System.Threading.Tasks;
 
 public class AutoSuspend
 {
-    static int Routine(String[] args)
+    public static readonly HttpClient httpClient = new HttpClient();
+
+    static async Task<int> Routine(String[] args)
     {
         // System Check
-        int systemWorks = SystemCheck.CheckSystem();
+        int systemWorks = await SystemCheck.CheckSystem(httpClient);
         if (systemWorks != 0)
         {
             return systemWorks;
@@ -14,7 +17,7 @@ public class AutoSuspend
         return 0;
     }
 
-    static int Main(String[] args)
+    static async Task<int> Main(String[] args)
     {
         // Logger Set-up.
         bool initializedLog = Logger<AutoSuspend>.InitializeLog();
@@ -24,7 +27,7 @@ public class AutoSuspend
         }
 
         // A way to end the program with logger.
-        int successfulRoutine = Routine(args);
+        int successfulRoutine = await Routine(args);
         if (successfulRoutine != 0)
         {
             Logger<AutoSuspend>.Log($"Auto-Suspend ended with error code: {successfulRoutine}", LogLevel.Error);

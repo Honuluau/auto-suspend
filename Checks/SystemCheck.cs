@@ -1,4 +1,5 @@
 using System.Net;
+using System.Threading.Tasks;
 
 public class SystemCheck
 {
@@ -7,15 +8,20 @@ public class SystemCheck
     public static bool directories { get; set; }
     public static bool files { get; set; }
 
-    public static bool CheckInternetConnection()
+    public static async Task<bool> CheckInternetConnection(HttpClient httpClient)
     {
         try
         {
-            using (var client = new WebClient())
-            using (var stream = client.OpenRead("http://www.google.com"))
+            HttpResponseMessage response = await httpClient.GetAsync("http://www.google.com");
+
+            if (response.IsSuccessStatusCode)
             {
                 Logger<SystemCheck>.Log("Internet connected.", LogLevel.Info);
                 return true;
+            } else
+            {
+                Logger<SystemCheck>.Log("No internet.", LogLevel.Error);
+                return false;
             }
         }
         catch
@@ -25,9 +31,9 @@ public class SystemCheck
         }
     }
 
-    public static int CheckSystem()
+    public static async Task<int> CheckSystem(HttpClient httpClient)
     {
-        online = CheckInternetConnection();
+        bool online = await CheckInternetConnection(httpClient);
         if (!online)
         {
             return 2;
