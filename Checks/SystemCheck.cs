@@ -1,4 +1,5 @@
 using System.Net;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 
 public class SystemCheck
@@ -31,12 +32,36 @@ public class SystemCheck
         }
     }
 
+    public static int CheckAvailableStorage()
+    {
+        string currentDirectory = Directory.GetCurrentDirectory()!;
+        DriveInfo drive = new DriveInfo(Path.GetPathRoot(currentDirectory)!);
+        long availableFreeSpace = drive.AvailableFreeSpace;
+
+        if (drive.AvailableFreeSpace < 1000000) // 1 MB
+        {
+            Logger<SystemCheck>.Log($"{drive.Name} has {FileSizeHelper.GetReadableFileSize(availableFreeSpace)} of storage which is less than 1MB.", LogLevel.Error);
+            return 2;
+        }
+        else
+        {
+            Logger<SystemCheck>.Log($"Drive ({drive.Name}) has sufficient storage: {FileSizeHelper.GetReadableFileSize(availableFreeSpace)}", LogLevel.Info);
+            return 0;   
+        }
+    }
+
     public static async Task<int> CheckSystem(HttpClient httpClient)
     {
         bool online = await CheckInternetConnection(httpClient);
         if (!online)
         {
             return 2;
+        }
+
+        int availableStorage = CheckAvailableStorage();
+        if (availableStorage != 0)
+        {
+            return availableStorage;
         }
 
         return 0;
