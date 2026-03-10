@@ -9,8 +9,6 @@ public class SystemCheck
     public static bool directories { get; set; }
     public static bool files { get; set; }
 
-    public static readonly string AUTO_SUSPEND_PATH = "/Users/dyl/.auto-suspend/";
-
     public static async Task<bool> CheckInternetConnection(HttpClient httpClient)
     {
         try
@@ -53,15 +51,15 @@ public class SystemCheck
         }
     }
 
-    public static int CheckDirectories()
+    public static int CheckDirectories(string path)
     {
         // Main Directory.
-        if (!Directory.Exists(AUTO_SUSPEND_PATH))
+        if (!Directory.Exists(path))
         {
             Logger<SystemCheck>.Log("Main directory not found.", LogLevel.Info);
             try
             {
-                Directory.CreateDirectory(AUTO_SUSPEND_PATH);
+                Directory.CreateDirectory(path);
                 Logger<SystemCheck>.Log("Created main directory.", LogLevel.Info);
             }
             catch (IOException e)
@@ -74,12 +72,12 @@ public class SystemCheck
         return 0;
     }
 
-    public static int CheckFiles()
+    public static int CheckFiles(String path)
     {
         int exitCode = 0;
 
         // Config file.
-        string configFilePath = AUTO_SUSPEND_PATH + "config.json";
+        string configFilePath = path + "config.json";
         if (!File.Exists(configFilePath))
         {
             Logger<SystemCheck>.Log("Config file not found", LogLevel.Info);
@@ -97,7 +95,7 @@ public class SystemCheck
         return exitCode;
     }
 
-    public static async Task<int> CheckSystem(HttpClient httpClient)
+    public static async Task<int> CheckSystem(HttpClient httpClient, string path)
     {
         bool online = await CheckInternetConnection(httpClient);
         if (!online)
@@ -111,13 +109,13 @@ public class SystemCheck
             return availableStorage;
         }
 
-        int directories = CheckDirectories();
+        int directories = CheckDirectories(path);
         if (directories != 0)
         {
             return directories;
         }
 
-        int checkFiles = CheckFiles();
+        int checkFiles = CheckFiles(path);
         if (checkFiles != 0)
         {
             return checkFiles;

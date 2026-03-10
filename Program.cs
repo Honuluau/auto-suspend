@@ -4,14 +4,22 @@ using System.Threading.Tasks;
 public class AutoSuspend
 {
     public static readonly HttpClient httpClient = new HttpClient();
+    public static readonly string AUTO_SUSPEND_PATH = "/Users/dyl/.auto-suspend/";
 
     static async Task<int> Routine(String[] args)
     {
         // System Check
-        int systemWorks = await SystemCheck.CheckSystem(httpClient);
+        int systemWorks = await SystemCheck.CheckSystem(httpClient, AUTO_SUSPEND_PATH);
         if (systemWorks != 0)
         {
             return systemWorks;
+        }
+
+        // Data Check
+        int dataWorks = DataCheck.CheckData(AUTO_SUSPEND_PATH);
+        if (dataWorks != 0)
+        {
+            return dataWorks;
         }
 
         return 0;
