@@ -9,6 +9,12 @@ public class DataCheck
         {
             File.Create(path);
             Logger<DataCheck>.Log($"Created database.db", LogLevel.Info);
+
+            int initializedSQL = SQLInterface.InitializeSQL(path);
+            if (initializedSQL != 0)
+            {
+                return initializedSQL;
+            }
         }
         catch (IOException e)
         {
