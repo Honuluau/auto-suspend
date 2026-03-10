@@ -21,7 +21,8 @@ public class SystemCheck
             {
                 Logger<SystemCheck>.Log("Internet connected.", LogLevel.Info);
                 return true;
-            } else
+            }
+            else
             {
                 Logger<SystemCheck>.Log("No internet.", LogLevel.Error);
                 return false;
@@ -48,7 +49,7 @@ public class SystemCheck
         else
         {
             Logger<SystemCheck>.Log($"Drive ({drive.Name}) has sufficient storage: {FileSizeHelper.GetReadableFileSize(availableFreeSpace)}", LogLevel.Info);
-            return 0;   
+            return 0;
         }
     }
 
@@ -62,7 +63,7 @@ public class SystemCheck
             {
                 Directory.CreateDirectory(AUTO_SUSPEND_PATH);
                 Logger<SystemCheck>.Log("Created main directory.", LogLevel.Info);
-            } 
+            }
             catch (IOException e)
             {
                 Logger<SystemCheck>.Log($"Main directory unable to be created: {e.Message}", LogLevel.Error);
@@ -75,13 +76,25 @@ public class SystemCheck
 
     public static int CheckFiles()
     {
+        int exitCode = 0;
+
         // Config file.
-        if (!File.Exists(AUTO_SUSPEND_PATH + "config.json"))
+        string configFilePath = AUTO_SUSPEND_PATH + "config.json";
+        if (!File.Exists(configFilePath))
         {
-            Logger<SystemCheck>.Log("")
+            Logger<SystemCheck>.Log("Config file not found", LogLevel.Info);
+            exitCode = Config.CreateConfig(configFilePath);
+        }
+        else
+        {
+            exitCode = Config.InitializeConfig(configFilePath);
+        }
+        if (exitCode != 0)
+        {
+            return exitCode;
         }
 
-        return 0;
+        return exitCode;
     }
 
     public static async Task<int> CheckSystem(HttpClient httpClient)
@@ -102,6 +115,12 @@ public class SystemCheck
         if (directories != 0)
         {
             return directories;
+        }
+
+        int checkFiles = CheckFiles();
+        if (checkFiles != 0)
+        {
+            return checkFiles;
         }
 
         return 0;
