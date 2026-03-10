@@ -65,9 +65,7 @@ public class SystemCheck
             } 
             catch (IOException e)
             {
-                string message = $"Main directory unable to be created: {e.Message}";
-                Logger<SystemCheck>.Log(message, LogLevel.Error);
-                Console.WriteLine(message);
+                Logger<SystemCheck>.Log($"Main directory unable to be created: {e.Message}", LogLevel.Error);
                 return 4;
             }
         }
