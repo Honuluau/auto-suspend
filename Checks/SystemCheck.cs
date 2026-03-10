@@ -9,6 +9,8 @@ public class SystemCheck
     public static bool directories { get; set; }
     public static bool files { get; set; }
 
+    public static readonly string AUTO_SUSPEND_PATH = "/Users/dyl/.auto-suspend/";
+
     public static async Task<bool> CheckInternetConnection(HttpClient httpClient)
     {
         try
@@ -50,6 +52,40 @@ public class SystemCheck
         }
     }
 
+    public static int CheckDirectories()
+    {
+        // Main Directory.
+        if (!Directory.Exists(AUTO_SUSPEND_PATH))
+        {
+            Logger<SystemCheck>.Log("Main directory not found.", LogLevel.Info);
+            try
+            {
+                Directory.CreateDirectory(AUTO_SUSPEND_PATH);
+                Logger<SystemCheck>.Log("Created main directory.", LogLevel.Info);
+            } 
+            catch (IOException e)
+            {
+                string message = $"Main directory unable to be created: {e.Message}";
+                Logger<SystemCheck>.Log(message, LogLevel.Error);
+                Console.WriteLine(message);
+                return 4;
+            }
+        }
+
+        return 0;
+    }
+
+    public static int CheckFiles()
+    {
+        // Config file.
+        if (!File.Exists(AUTO_SUSPEND_PATH + "config.json"))
+        {
+            Logger<SystemCheck>.Log("")
+        }
+
+        return 0;
+    }
+
     public static async Task<int> CheckSystem(HttpClient httpClient)
     {
         bool online = await CheckInternetConnection(httpClient);
@@ -62,6 +98,12 @@ public class SystemCheck
         if (availableStorage != 0)
         {
             return availableStorage;
+        }
+
+        int directories = CheckDirectories();
+        if (directories != 0)
+        {
+            return directories;
         }
 
         return 0;
