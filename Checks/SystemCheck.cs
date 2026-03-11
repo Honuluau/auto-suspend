@@ -17,7 +17,6 @@ public class SystemCheck
 
             if (response.IsSuccessStatusCode)
             {
-                Logger<SystemCheck>.Log("Internet connected.", LogLevel.Info);
                 return true;
             }
             else
@@ -46,7 +45,6 @@ public class SystemCheck
         }
         else
         {
-            Logger<SystemCheck>.Log($"Drive ({drive.Name}) has sufficient storage: {FileSizeHelper.GetReadableFileSize(availableFreeSpace)}", LogLevel.Info);
             return 0;
         }
     }
@@ -120,6 +118,8 @@ public class SystemCheck
         {
             return checkFiles;
         }
+
+        Logger<SystemCheck>.Log("System check complete, no errors found.", LogLevel.Info);
 
         return 0;
     }

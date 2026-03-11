@@ -49,6 +49,8 @@ public class DataCheck
             return assertedDatabase;
         }
 
+        Logger<DataCheck>.Log("Data check complete, no errors found.", LogLevel.Info);
+
         return 0;
     }
 }
