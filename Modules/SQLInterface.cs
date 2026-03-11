@@ -59,31 +59,26 @@ public class SQLInterface
         )
     """;
 
+    public static readonly string[] CREATE_TABLE_COMMANDS = [CREATE_PATRON_TABLE_COMMAND, CREATE_ITEM_TABLE_COMMAND,
+        CREATE_LOAN_TABLE_COMMAND, CREATE_NOTE_TABLE_COMMAND, CREATE_NOTE_LOAN_TABLE_COMMAND];
+
     public static int InitializeSQL(String dbPath)
     {
         try
         {
-            Logger<SQLInterface>.Log("Connection opening.", LogLevel.Info);
+            Logger<SQLInterface>.Log("SQL initialization sequence started.", LogLevel.Info);
             using var connection = new SqliteConnection($"Data Source={dbPath}");
             connection.Open();
 
-            using var command = connection.CreateCommand();
-            command.CommandText = """
-                CREATE TABLE IF NOT EXISTS loan (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    alma_id TEXT,
-                    out_circ_desk TEXT,
-                    in_circ_desk TEXT,
-                    patron_id INTEGER,
-                    item_id INTEGER,
-                    loan_date TEXT,
-                    due_date TEXT,
-                    return_date TEXT
-                )
-            """;
-            command.ExecuteNonQuery();
-
-            Logger<SQLInterface>.Log("Connection closed", LogLevel.Info);
+            // Create Tables
+            for (int i = 0; i < CREATE_TABLE_COMMANDS.Length; i++)
+            {
+                using var command = connection.CreateCommand();
+                command.CommandText = CREATE_TABLE_COMMANDS[i];
+                command.ExecuteNonQuery();
+            }
+            
+            Logger<SQLInterface>.Log("SQL initialized successfully.", LogLevel.Info);
         }
         catch (Exception e)
         {
