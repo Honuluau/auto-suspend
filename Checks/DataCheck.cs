@@ -7,7 +7,7 @@ public class DataCheck
     {
         try
         {
-            File.Create(path);
+            File.Create(path).Dispose();
             Logger<DataCheck>.Log($"Created database.db", LogLevel.Info);
 
             int initializedSQL = SQLInterface.InitializeSQL(path);
