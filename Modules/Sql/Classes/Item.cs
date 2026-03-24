@@ -5,5 +5,5 @@ public class Item
     public string barcode { get; set; }
     public string title { get; set; }
     public string description { get; set; }
-    public string type { get; set; }
+    public string policy { get; set; }
 }
