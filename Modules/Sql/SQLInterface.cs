@@ -62,12 +62,16 @@ public class SQLInterface
     public static readonly string[] CREATE_TABLE_COMMANDS = [CREATE_PATRON_TABLE_COMMAND, CREATE_ITEM_TABLE_COMMAND,
         CREATE_LOAN_TABLE_COMMAND, CREATE_NOTE_TABLE_COMMAND, CREATE_NOTE_LOAN_TABLE_COMMAND];
 
+    public static string CONNECTION_STRING = "";
+
     public static int InitializeSQL(String dbPath)
     {
         try
         {
             Logger<SQLInterface>.Log("SQL initialization sequence started.", LogLevel.Info);
-            using var connection = new SqliteConnection($"Data Source={dbPath}");
+            CONNECTION_STRING = $"Data Source={dbPath}";
+
+            using SqliteConnection connection = new SqliteConnection(CONNECTION_STRING);
             connection.Open();
 
             // Create Tables
@@ -77,13 +81,31 @@ public class SQLInterface
                 command.CommandText = CREATE_TABLE_COMMANDS[i];
                 command.ExecuteNonQuery();
             }
-            
+
             Logger<SQLInterface>.Log("SQL initialized successfully.", LogLevel.Info);
         }
         catch (Exception e)
         {
             Logger<SQLInterface>.Log($"Failed to Initialize SQL database: {e.Message}", LogLevel.Error);
             return 8;
+        }
+
+        return 0;
+    }
+
+    public static int ConsolidateNotes()
+    {
+        try
+        {
+            using SqliteConnection connection = new SqliteConnection(CONNECTION_STRING);
+            connection.Open();
+
+            
+        }
+        catch (Exception e)
+        {
+            Logger<SQLInterface>.Log($"Failed to consolidate loans into notes: {e.Message}", LogLevel.Error);
+            return 9;
         }
 
         return 0;
