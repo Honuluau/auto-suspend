@@ -1,3 +1,4 @@
+using System.Data;
 using Microsoft.Data.Sqlite;
 
 public class SQLInterface
@@ -103,14 +104,32 @@ public class SQLInterface
         {
             using (SqliteConnection connection = new SqliteConnection(CONNECTION_STRING))
             {
-                connection.Open();
-                SqliteCommand command = new SqliteCommand("SELECT * FROM item", connection);
-                SqliteDataReader reader = command.ExecuteReader();
+                /*
+                READ DATA
 
-                while (reader.Read())
+                Pull the id and loan_date from the database of all loans that are not attached to a note via a note_loan instance. 
+                This creates a 2x? data table if not empty.
+                */
+
+                connection.Open();
+                SqliteCommand command = new SqliteCommand("SELECT loan.id, loan.loan_date FROM loan WHERE NOT EXISTS (SELECT 1 FROM note_loan WHERE note_loan.loan_id = loan.id)", connection);
+                SqliteDataReader reader = command.ExecuteReader();
+    
+                DataTable dataTable = new DataTable();
+                dataTable.Load(reader);
+
+                // Consolidation
+                foreach (DataRow row in dataTable.Rows)
                 {
-                    Logger<SQLInterface>.Log($"Item: {reader[0].ToString()}", LogLevel.Info);
+                    int loanId = Convert.ToInt32(row[0]);
+                    DateTime loanDate = ParseDates.ConvertStringToDateTime(row[1].ToString()!);
+
+                    // Do some algorithm here to sort the loans into days/notes, possibly a dictionary.
+                    // You need to make it so that the note table knows what day and patron to sort to.
                 }
+
+                // Write Data
+
 
                 reader.Close();
                 connection.Close();
