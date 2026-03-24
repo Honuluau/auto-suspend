@@ -20,7 +20,7 @@ public class SQLInterface
             barcode TEXT,
             title TEXT,
             description TEXT,
-            type TEXT
+            policy TEXT
         )
     """;
 
