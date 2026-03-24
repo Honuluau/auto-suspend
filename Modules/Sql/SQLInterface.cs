@@ -62,15 +62,18 @@ public class SQLInterface
     public static readonly string[] CREATE_TABLE_COMMANDS = [CREATE_PATRON_TABLE_COMMAND, CREATE_ITEM_TABLE_COMMAND,
         CREATE_LOAN_TABLE_COMMAND, CREATE_NOTE_TABLE_COMMAND, CREATE_NOTE_LOAN_TABLE_COMMAND];
 
-    public static string CONNECTION_STRING = "";
+    public static string CONNECTION_STRING { get; set; } = "";
 
-    public static int InitializeSQL(String dbPath)
+    public static void Initialize(String dbPath)
+    {
+        CONNECTION_STRING = $"Data Source={dbPath}";
+    }
+
+    public static int CreateSqliteDB()
     {
         try
         {
             Logger<SQLInterface>.Log("SQL initialization sequence started.", LogLevel.Info);
-            CONNECTION_STRING = $"Data Source={dbPath}";
-
             using SqliteConnection connection = new SqliteConnection(CONNECTION_STRING);
             connection.Open();
 
@@ -93,14 +96,25 @@ public class SQLInterface
         return 0;
     }
 
-    public static int ConsolidateNotes()
+    public static int ConsolidateLoans()
     {
+        Logger<SQLInterface>.Log($"Consolidating loans into notes: {CONNECTION_STRING}", LogLevel.Info);
         try
         {
-            using SqliteConnection connection = new SqliteConnection(CONNECTION_STRING);
-            connection.Open();
+            using (SqliteConnection connection = new SqliteConnection(CONNECTION_STRING))
+            {
+                connection.Open();
+                SqliteCommand command = new SqliteCommand("SELECT * FROM item", connection);
+                SqliteDataReader reader = command.ExecuteReader();
 
-            
+                while (reader.Read())
+                {
+                    Logger<SQLInterface>.Log($"Item: {reader[0].ToString()}", LogLevel.Info);
+                }
+
+                reader.Close();
+                connection.Close();
+            }
         }
         catch (Exception e)
         {

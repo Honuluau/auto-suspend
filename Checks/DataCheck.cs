@@ -10,7 +10,7 @@ public class DataCheck
             File.Create(path).Dispose();
             Logger<DataCheck>.Log($"Created database.db", LogLevel.Info);
 
-            int initializedSQL = SQLInterface.InitializeSQL(path);
+            int initializedSQL = SQLInterface.CreateSqliteDB();
             if (initializedSQL != 0)
             {
                 return initializedSQL;
@@ -29,6 +29,7 @@ public class DataCheck
     public static int assertDatabase(string path)
     {
         string databasePath = Path.Join(path, databaseFileName);
+        SQLInterface.Initialize(databasePath); // Initialize SQLInterface; Extremely important.
         if (!File.Exists(databasePath))
         {
             int database = createDatabase(databasePath);
