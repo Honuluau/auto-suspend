@@ -116,27 +116,58 @@ public class SQLInterface
                 */
 
                 connection.Open();
-                SqliteCommand command = new SqliteCommand("SELECT loan.id, loan.loan_date FROM loan WHERE NOT EXISTS (SELECT 1 FROM note_loan WHERE note_loan.loan_id = loan.id)", connection);
+                SqliteCommand command = new SqliteCommand("SELECT loan.id, loan.loan_date, loan.patron_id FROM loan WHERE NOT EXISTS (SELECT 1 FROM note_loan WHERE note_loan.loan_id = loan.id)", connection);
                 SqliteDataReader reader = command.ExecuteReader();
-    
+
                 DataTable dataTable = new DataTable();
                 dataTable.Load(reader);
+
+                reader.Close();
 
                 // Consolidation
                 foreach (DataRow row in dataTable.Rows)
                 {
                     int loanId = Convert.ToInt32(row[0]);
                     DateTime loanDate = ParseDates.ConvertStringToDateTime(row[1].ToString()!);
+                    int patronId = Convert.ToInt32(row[2]);
+                    int noteId = -1;
 
-                    // Do some algorithm here to sort the loans into days/notes, possibly a dictionary.
-                    // You need to make it so that the note table knows what day and patron to sort to.
-                    Console.WriteLine($"{loanId}\t{loanDate.Date}");
+                    // Ensure note exists in SQL.
+                    string query = "SELECT id FROM note WHERE patron_id = $patronId AND date = $loanDate";
+                    using (SqliteCommand queryCommand = new SqliteCommand(query, connection))
+                    {
+                        queryCommand.Parameters.AddWithValue("$patronId", patronId);
+                        queryCommand.Parameters.AddWithValue("$loanDate", loanDate.ToString("yyyy-MM-dd"));
+
+                        var result = queryCommand.ExecuteScalar();
+                        if (result == null)
+                        {
+                            string append = "INSERT INTO note (patron_id, date) VALUES ($patronId, $date) RETURNING id";
+                            using (SqliteCommand appendCommand = new SqliteCommand(append, connection))
+                            {
+                                appendCommand.Parameters.AddWithValue("$patronId", patronId);
+                                appendCommand.Parameters.AddWithValue("$date", loanDate.ToString("yyyy-MM-dd"));
+
+                                noteId = Convert.ToInt32(appendCommand.ExecuteScalar()!);
+                            }
+                        }
+                        else
+                        {
+                            noteId = Convert.ToInt32(result);
+                        }
+                    }
+
+                    // Create note_loan
+                    string insert = "INSERT INTO note_loan (note_id, loan_id) VALUES ($noteId, $loanId)";
+                    using (SqliteCommand insertCommand = new SqliteCommand(insert, connection))
+                    {
+                        insertCommand.Parameters.AddWithValue("$noteId", noteId);
+                        insertCommand.Parameters.AddWithValue("$loanId", loanId);
+
+                        insertCommand.ExecuteNonQuery();
+                    }
                 }
 
-                // Write Data
-
-
-                reader.Close();
                 connection.Close();
             }
         }
