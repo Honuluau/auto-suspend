@@ -48,7 +48,7 @@ public class SQLInterface
             patron_id INTEGER,
             date TEXT,
             status INTEGER,
-            updated INTEGER,
+            updated INTEGER, // 0 = NOT UPDATED, NOTE NEEDS TO BE PUBLISHED TO ALMA // 1 = UPDATED, NO ACTION NECESSARY.
 
             FOREIGN KEY(patron_id) REFERENCES patron(id)
         )
