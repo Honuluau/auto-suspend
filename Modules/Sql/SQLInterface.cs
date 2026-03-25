@@ -48,6 +48,7 @@ public class SQLInterface
             patron_id INTEGER,
             date TEXT,
             status INTEGER,
+            updated INTEGER,
 
             FOREIGN KEY(patron_id) REFERENCES patron(id)
         )
@@ -179,4 +180,6 @@ public class SQLInterface
 
         return 0;
     }
+
+
 }
