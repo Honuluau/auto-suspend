@@ -45,7 +45,11 @@ public class SQLInterface
     public static readonly string CREATE_NOTE_TABLE_COMMAND = """
         CREATE TABLE IF NOT EXISTS note (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            status INTEGER
+            patron_id INTEGER,
+            date TEXT,
+            status INTEGER,
+
+            FOREIGN KEY(patron_id) REFERENCES patron(id)
         )
     """;
 
@@ -126,6 +130,7 @@ public class SQLInterface
 
                     // Do some algorithm here to sort the loans into days/notes, possibly a dictionary.
                     // You need to make it so that the note table knows what day and patron to sort to.
+                    Console.WriteLine($"{loanId}\t{loanDate.Date}");
                 }
 
                 // Write Data
