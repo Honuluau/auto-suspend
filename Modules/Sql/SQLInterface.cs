@@ -1,4 +1,5 @@
 using System.Data;
+using System.IO.Pipelines;
 using Microsoft.Data.Sqlite;
 using SQLitePCL;
 
@@ -187,20 +188,20 @@ public class SQLInterface
     {
         try
         {
+            int result = 0;
             using (SqliteConnection connection = new SqliteConnection(CONNECTION_STRING))
             {
                 connection.Open();
                 string query = $"SELECT row_num FROM ( SELECT id, patron_id, ROW_NUMBER() OVER (PARTITION BY patron_id ORDER BY id) AS row_num FROM note ) t WHERE id = {noteId};";
                 using (SqliteCommand command = new SqliteCommand(query, connection))
                 {
-                    var result = command.ExecuteScalar();
-                    Console.WriteLine(result.ToString());
+                    result = Convert.ToInt32(command.ExecuteScalar())!;
                 }
 
                 connection.Close();
             }
-            
-            return 0;
+
+            return result;
         }
         catch (Exception e)
         {
