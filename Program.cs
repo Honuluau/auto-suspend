@@ -5,6 +5,7 @@ public class AutoSuspend
 {
     public static readonly HttpClient httpClient = new HttpClient();
     public static readonly string AUTO_SUSPEND_PATH = "/Users/dyl/.auto-suspend/";
+    public static readonly int GRACE_DAYS = 3;
 
     static async Task<int> Routine(String[] args)
     {
@@ -27,6 +28,7 @@ public class AutoSuspend
 
         // Development Stuff -- Subject to Change
         SQLInterface.ConsolidateLoans();
+        NoteAnalysis.AnalyzeNotes();
         return 0;
     }
 
