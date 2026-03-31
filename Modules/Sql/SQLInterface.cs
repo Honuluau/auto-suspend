@@ -67,8 +67,18 @@ public class SQLInterface
         )
     """;
 
-    public static readonly string[] CREATE_TABLE_COMMANDS = [CREATE_PATRON_TABLE_COMMAND, CREATE_ITEM_TABLE_COMMAND,
-        CREATE_LOAN_TABLE_COMMAND, CREATE_NOTE_TABLE_COMMAND, CREATE_NOTE_LOAN_TABLE_COMMAND];
+    public static readonly string CREATE_PERM_SUSPEND_TABLE_COMMAND = """
+        CREATE TABLE IF NOT EXISTS perm_suspend (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            patron_id INTEGER,
+            note TEXT,
+
+            FOREIGN KEY(patron_id) REFERENCES patron(id)
+        )
+    """;
+
+    public static readonly string[] CREATE_TABLE_COMMANDS = [CREATE_PATRON_TABLE_COMMAND, CREATE_ITEM_TABLE_COMMAND, CREATE_LOAN_TABLE_COMMAND, 
+        CREATE_NOTE_TABLE_COMMAND, CREATE_NOTE_LOAN_TABLE_COMMAND, CREATE_PERM_SUSPEND_TABLE_COMMAND];
 
     public static string CONNECTION_STRING { get; set; } = "";
 
