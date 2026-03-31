@@ -155,7 +155,7 @@ public class SQLInterface
                         var result = queryCommand.ExecuteScalar();
                         if (result == null)
                         {
-                            string append = "INSERT INTO note (patron_id, date) VALUES ($patronId, $date) RETURNING id";
+                            string append = "INSERT INTO note (patron_id, date, updated) VALUES ($patronId, $date, 0) RETURNING id";
                             using (SqliteCommand appendCommand = new SqliteCommand(append, connection))
                             {
                                 appendCommand.Parameters.AddWithValue("$patronId", patronId);
