@@ -4,4 +4,9 @@ public class ParseDates
     {
         return DateTime.Parse(dateTimeString, null, System.Globalization.DateTimeStyles.RoundtripKind);
     }
+
+    public static string TodayYearMonthDay()
+    {
+        return DateTime.Today.ToString("yyyy-MM-dd");
+    }
 }
