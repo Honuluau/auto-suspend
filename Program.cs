@@ -27,7 +27,6 @@ public class AutoSuspend
 
         // Development Stuff -- Subject to Change
         SQLInterface.ConsolidateLoans();
-
         return 0;
     }
 

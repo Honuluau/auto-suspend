@@ -1,5 +1,6 @@
 using System.Data;
 using Microsoft.Data.Sqlite;
+using SQLitePCL;
 
 public class SQLInterface
 {
@@ -181,5 +182,30 @@ public class SQLInterface
         return 0;
     }
 
+    // Get instance of a note using the corresponding note ID.
+    public static int GetInstance(int noteId)
+    {
+        try
+        {
+            using (SqliteConnection connection = new SqliteConnection(CONNECTION_STRING))
+            {
+                connection.Open();
+                string query = $"SELECT row_num FROM ( SELECT id, patron_id, ROW_NUMBER() OVER (PARTITION BY patron_id ORDER BY id) AS row_num FROM note ) t WHERE id = {noteId};";
+                using (SqliteCommand command = new SqliteCommand(query, connection))
+                {
+                    var result = command.ExecuteScalar();
+                    Console.WriteLine(result.ToString());
+                }
 
+                connection.Close();
+            }
+            
+            return 0;
+        }
+        catch (Exception e)
+        {
+            Logger<SQLInterface>.Log($"Failed to get instance number for note id: {noteId}.\t{e.Message}", LogLevel.Error);
+            return 0;
+        }
+    }
 }
