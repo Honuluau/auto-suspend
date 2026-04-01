@@ -9,6 +9,7 @@ public class Loan
     public DateTime LoanDate { get; set; }
     public DateTime DueDate { get; set; }
     public DateTime? ReturnDate { get; set; }
+    public int DaysOfGrace { get; set; }
 
     public Loan(int id, string almaId, string outCircDesk, string inCircDesk, int patronId, Item item, DateTime loanDate, DateTime dueDate, DateTime? returnDate)
     {
@@ -21,10 +22,26 @@ public class Loan
         this.LoanDate = loanDate;
         this.DueDate = dueDate;
         this.ReturnDate = returnDate;
+
+        // Calculate Grace Period
+        TimeSpan loanPeriod = DueDate - LoanDate;
+        if (loanPeriod.Days <= 1) // 24 Hour Loan
+        {
+            this.DaysOfGrace = 1;
+        } else
+        {
+            this.DaysOfGrace = 3;
+        }
     }
 
     public override string ToString()
     {
         return $"{this.Id}\t{this.AlmaId}\t{this.OutCircDesk}\t{this.InCircDesk}\t{this.PatronId}\t{this.Item.Barcode}\t{this.LoanDate}\t{this.DueDate}\t{this.ReturnDate}";
+    }
+
+    public TimeSpan GetOverdueTimespan()
+    {
+        // Check for grace period.
+        return DateTime.Now - this.DueDate;
     }
 }
