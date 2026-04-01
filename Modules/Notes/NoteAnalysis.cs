@@ -50,6 +50,14 @@ public class NoteAnalysis
 
 
                        Note note = new Note(id, patron_id, date, statusType, updated, instance);
+                       note.InitializeLoans();
+
+                       switch(note.Status)
+                        {
+                            default:
+                                AnalyzeNullNote(note, connection);
+                                break;
+                        }
                     }
                 }
 
@@ -67,8 +75,11 @@ public class NoteAnalysis
     }
 
     // Analyze Notes whose Status is NULL
-    public static int AnalyzeNullNote(Note note)
+    public static int AnalyzeNullNote(Note note, SqliteConnection connection)
     {
+        bool allReturned = true;
+        int longestOverdue = -1;
+
         return 0;
     }
 }

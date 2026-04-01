@@ -8,9 +8,9 @@ public class Loan
     public Item Item { get; set; }
     public DateTime LoanDate { get; set; }
     public DateTime DueDate { get; set; }
-    public DateTime ReturnDate { get; set; }
+    public DateTime? ReturnDate { get; set; }
 
-    public Loan(int id, string almaId, string outCircDesk, string inCircDesk, int patronId, Item item, DateTime loanDate, DateTime dueDate, DateTime returnDate)
+    public Loan(int id, string almaId, string outCircDesk, string inCircDesk, int patronId, Item item, DateTime loanDate, DateTime dueDate, DateTime? returnDate)
     {
         this.Id = id;
         this.AlmaId = almaId;
