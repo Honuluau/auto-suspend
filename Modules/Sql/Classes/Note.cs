@@ -4,11 +4,11 @@ public class Note
 {
     public int Id { get; set; }
     public int PatronId { get; set; }
-    DateTime Date { get; set; }
+    public DateTime Date { get; set; }
     public StatusType Status { get; set; }
-    int Updated { get; set; }
-    int Instance { get; set; }
-    Loan[] loans { get; set; }
+    public int Updated { get; set; }
+    public int Instance { get; set; }
+    public Loan[] Loans { get; set; }
 
     public Note(int id, int patronId, DateTime date, StatusType status, int updated, int instance)
     {
@@ -22,6 +22,6 @@ public class Note
 
     public void InitializeLoans()
     {
-        SQLInterface.GetLoansForNote(this.Id);
+        this.Loans = SQLInterface.GetLoansForNote(this.Id)!;
     }
 }

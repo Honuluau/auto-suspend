@@ -55,7 +55,11 @@ public class NoteAnalysis
                        switch(note.Status)
                         {
                             default:
-                                AnalyzeNullNote(note, connection);
+                                int error = AnalyzeNullNote(note, connection);
+                                if (error != 0)
+                                {
+                                    return error;
+                                }
                                 break;
                         }
                     }
@@ -79,6 +83,70 @@ public class NoteAnalysis
     {
         bool allReturned = true;
         int longestOverdue = -1;
+        int longestGrace = -1;
+
+        foreach(Loan loan in note.Loans!)
+        {
+            // Check if Returned
+            if (loan.ReturnDate == null)
+            {
+                allReturned = false;
+            }
+
+            // Find Longest Grace
+            if (loan.DaysOfGrace > longestGrace)
+            {
+                longestGrace = loan.DaysOfGrace;
+            }
+
+            // Find Longest Overdue
+            TimeSpan overdue = loan.GetOverdueTimespan();
+            if (overdue.Days > longestOverdue)
+            {
+                longestOverdue = overdue.Days;
+            }
+        }
+
+        // Update SQL.
+        try
+        {
+            using (connection)
+            {
+                connection.Open();
+                
+                string setCommand = "UPDATE note SET status = $status, updated = $updated WHERE id = $id";
+                using (SqliteCommand command = new SqliteCommand(setCommand, connection))
+                {
+                    command.Parameters.AddWithValue("$id", note.Id);
+
+                    if (allReturned == false)
+                    {
+                        // Check if past grace (most likely if not all). During the development of ASAS, the excel sheets would contain loans within grace.
+                        if (longestOverdue > longestGrace)
+                        {
+                            command.Parameters.AddWithValue("$status", "SUSPENDED");
+                            command.Parameters.AddWithValue("$updated", "1"); // Value is unaligned with Alma (Needs Update).
+                        } 
+                    }
+                    else if (longestOverdue <= longestGrace) // If all items are already returned and within grace period, then there should not be a suspension.
+                    {
+                        command.Parameters.AddWithValue("$status", "GRACE");
+                    }
+                    else // All items are returned, but over the grace period. Create a suspension that has already been resolved.
+                    {
+                        command.Parameters.AddWithValue("$status", "RESOLVED");
+                        command.Parameters.AddWithValue("$updated", "1");
+                    }
+
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+        catch (IOException e)
+        {
+            Logger<NoteAnalysis>.Log($"Error updating Null Note: {e.Message}", LogLevel.Error);
+            return 11;
+        }
 
         return 0;
     }
