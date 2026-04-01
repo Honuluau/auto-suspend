@@ -1,8 +1,8 @@
 public enum StatusType
 {
     NULL,
-    Suspended,
-    Resolved,
-    Reinstated,
-    Permanent,
+    SUSPENDED,
+    RESOLVED,
+    REINSTATED,
+    PERMANENT,
 }

@@ -40,8 +40,16 @@ public class NoteAnalysis
                         string status = row[3].ToString()!;
                         int updated = Convert.ToInt32(row[4]);
                         int instance = SQLInterface.GetInstance(id);
+                        StatusType statusType = StatusType.NULL;
 
-                        Console.WriteLine($"{id}\t{patron_id}\t{date.ToString()}\t{status}\t{updated}\t{instance}");
+                        // Update status if not null.
+                        if (status != "")
+                        {
+                            statusType = (StatusType) Enum.Parse(typeof(StatusType), status, true);
+                        }
+
+
+                       Note note = new Note(id, patron_id, date, statusType, updated, instance);
                     }
                 }
 
@@ -55,6 +63,12 @@ public class NoteAnalysis
         }
 
         Logger<NoteAnalysis>.Log($"Ended Note Analysis @ {DateTime.Now.ToString()}", LogLevel.Info);
+        return 0;
+    }
+
+    // Analyze Notes whose Status is NULL
+    public static int AnalyzeNullNote(Note note)
+    {
         return 0;
     }
 }
