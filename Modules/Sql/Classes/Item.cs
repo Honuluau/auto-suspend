@@ -16,4 +16,9 @@ public class Item
         this.Description = description;
         this.Policy = policy;
     }
+
+    public override string ToString()
+    {
+        return $"(Item: {this.Id}\t{this.MMSID}\t{this.Barcode}\t{this.Title}\t{this.Description}\t{this.Policy}";
+    }
 }

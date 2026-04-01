@@ -8,6 +8,7 @@ public class Note
     public StatusType Status { get; set; }
     int Updated { get; set; }
     int Instance { get; set; }
+    Loan[] loans { get; set; }
 
     public Note(int id, int patronId, DateTime date, StatusType status, int updated, int instance)
     {
@@ -17,5 +18,10 @@ public class Note
         this.Status = status;
         this.Updated = updated;
         this.Instance = instance;
+    }
+
+    public void InitializeLoans()
+    {
+        SQLInterface.GetLoansForNote(this.Id);
     }
 }

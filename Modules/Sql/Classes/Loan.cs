@@ -1,11 +1,30 @@
 public class Loan
 {
-    public int id { get; set; }
-    public string alma_id { get; set; }
-    public string out_circ_desk { get; set; }
-    public string in_circ_desk { get; set; }
-    public int patron_id { get; set; }
-    public int item_id { get; set; }
-    public DateTime loan_date { get; set; }
-    public DateTime return_date { get; set; }
+    public int Id { get; set; }
+    public string AlmaId { get; set; }
+    public string OutCircDesk { get; set; }
+    public string InCircDesk { get; set; }
+    public int PatronId { get; set; }
+    public Item Item { get; set; }
+    public DateTime LoanDate { get; set; }
+    public DateTime DueDate { get; set; }
+    public DateTime ReturnDate { get; set; }
+
+    public Loan(int id, string almaId, string outCircDesk, string inCircDesk, int patronId, Item item, DateTime loanDate, DateTime dueDate, DateTime returnDate)
+    {
+        this.Id = id;
+        this.AlmaId = almaId;
+        this.OutCircDesk = outCircDesk;
+        this.InCircDesk = inCircDesk;
+        this.PatronId = patronId;
+        this.Item = item;
+        this.LoanDate = loanDate;
+        this.DueDate = dueDate;
+        this.ReturnDate = returnDate;
+    }
+
+    public override string ToString()
+    {
+        return $"{this.Id}\t{this.AlmaId}\t{this.OutCircDesk}\t{this.InCircDesk}\t{this.PatronId}\t{this.Item.Barcode}\t{this.LoanDate}\t{this.DueDate}\t{this.ReturnDate}";
+    }
 }
