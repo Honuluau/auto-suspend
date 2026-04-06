@@ -8,8 +8,6 @@ public class OverdueAnalyticsAPI
 
     public static int GatherOverdueEagleIds()
     {
-        
-
         return 0;
     }
 }

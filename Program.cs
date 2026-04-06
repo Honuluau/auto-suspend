@@ -23,11 +23,11 @@ public class AutoSuspend
             return dataWorks;
         }
 
-        // API Check
-        int apikeysGathered = APIKeys.Init();
-        if (apikeysGathered != 0)
+        // Sensitive Info Check
+        int sensitiveInfo = SensitiveInfo.Init();
+        if (sensitiveInfo != 0)
         {
-            return apikeysGathered;
+            return sensitiveInfo;
         }
 
         // Development Stuff -- Subject to Change
