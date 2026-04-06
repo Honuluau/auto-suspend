@@ -31,6 +31,11 @@ public class AutoSuspend
         }
 
         // Development Stuff -- Subject to Change
+        int overdueAnalyticsAPI = await OverdueAnalyticsAPI.GatherOverdueEagleIds(httpClient);
+        if (overdueAnalyticsAPI != 0)
+        {
+            return 0;
+        }
         SQLInterface.ConsolidateLoans();
         NoteAnalysis.AnalyzeNotes();
         return 0;
