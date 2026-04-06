@@ -23,8 +23,12 @@ public class AutoSuspend
             return dataWorks;
         }
 
-
-
+        // API Check
+        int apikeysGathered = APIKeys.Init();
+        if (apikeysGathered != 0)
+        {
+            return apikeysGathered;
+        }
 
         // Development Stuff -- Subject to Change
         SQLInterface.ConsolidateLoans();
