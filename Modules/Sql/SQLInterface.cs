@@ -8,7 +8,6 @@ public class SQLInterface
     public static readonly string CREATE_PATRON_TABLE_COMMAND = """
         CREATE TABLE IF NOT EXISTS patron (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            alma_id TEXT,
             eagle_id TEXT,
             first_name TEXT,
             last_name TEXT,
@@ -317,5 +316,12 @@ public class SQLInterface
             Logger<SQLInterface>.Log($"Failed to get loans for note: {noteId}\t{e.Message}", LogLevel.Error);
             return null;
         }
+    }
+
+
+    // Insert patron information into database.
+    public static int InsertPatron(string eagleId, string firstName, string lastName, string userGroup)
+    {
+        return 0;
     }
 }
