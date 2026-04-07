@@ -36,6 +36,8 @@ public class AutoSuspend
         {
             return 0;
         }
+
+        File.WriteAllLines("eagleids.txt", OverdueAnalyticsAPI.GetEagleIds());
         SQLInterface.ConsolidateLoans();
         NoteAnalysis.AnalyzeNotes();
         return 0;

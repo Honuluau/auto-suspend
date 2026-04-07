@@ -8,10 +8,12 @@ public class OverdueAnalyticsAPI
     private static int TotalRequests = 0;
     private static XNamespace ROWSET = "urn:schemas-microsoft-com:xml-analysis:rowset";
 
+    // This method requests Alma Analytics API for a page (50) of eagle ids. It will append the resumptionToken to the end of the list it returns.
     private static async Task<List<string>> GetPageOfEagleIds(HttpClient httpClient, string? resumptionToken)
     {
         string? newResumptionToken = null;
 
+        // Formatting the url to contain the request URL, API Key, and Resumption Token.
         string url = $"{SensitiveInfo.OverdueReportUrl}&apikey={SensitiveInfo.AnalyticsAPIKey}";
         if (resumptionToken != null)
         {
@@ -22,14 +24,10 @@ public class OverdueAnalyticsAPI
 
         try
         {
-            /* 
-            // I don't intend on spamming the live server so this is commented out during development. Data is written to a txt file in bin.
-
+            // Retrieve XML Data.
             string xmlData = await httpClient.GetStringAsync(url);
             TotalRequests++;
-            */
 
-            string xmlData = File.ReadAllText("overduexml.txt");
             XDocument document = XDocument.Parse(xmlData);
 
             // Get Resumption Token
@@ -41,16 +39,17 @@ public class OverdueAnalyticsAPI
                 newResumptionToken = resumptionTokenElement.Value;
             }
 
-            // Get Eagle Ids
+            // Get Eagle Ids per row in XML.
             var rows = document.Descendants(ROWSET + "Row");
             foreach (XElement row in rows)
             {
                 string? eagleId = row.Element(ROWSET + "Column4")?.Value;
-                
+
                 if (eagleId != null)
                 {
                     eagleIds.Add(eagleId);
-                } else
+                }
+                else
                 {
                     Logger<OverdueAnalyticsAPI>.Log($"An eagle id is NULL in the xml return data.", LogLevel.Error);
                     return ["FAIL"];
@@ -66,30 +65,67 @@ public class OverdueAnalyticsAPI
         // If Resumption Token was found.
         if (newResumptionToken != null)
         {
-            eagleIds.Add(newResumptionToken);
-            eagleIds.Add("ResumptionToken");
+            eagleIds.Add($"ResumptionToken-{newResumptionToken}");
         }
 
         return eagleIds;
     }
 
+    // This function updates the static class by getting all pages of eagle ids from the overdue analytics API. 
     public static async Task<int> GatherOverdueEagleIds(HttpClient httpClient)
     {
-        // You just got done writing the Page request. Create a loop to gather all eagleIds. You check if there is a resumption token by checking the last index.
-        List<string> eagleIds = await GetPageOfEagleIds(httpClient, null);
-        if (eagleIds.Count == 1)
+        List<string> eagleIds = new List<string>();
+        string? resumptionToken = null;
+
+        // Get pages, check for resumption token, if there is one: continue else stop.
+        Stopwatch.Start();
+        Logger<OverdueAnalyticsAPI>.Log("Gathering eagle ids with overdue loans start.", LogLevel.Info);
+        while (true)
         {
-            if (eagleIds[0] == "FAIL")
+            List<string> page = await GetPageOfEagleIds(httpClient, resumptionToken);
+            if (page.Count == 1)
             {
-                return 13;
+                if (page[0] == "FAIL")
+                {
+                    return 13;
+                }
+            }
+            else if (page.Count == 0)
+            {
+                break;
+            }
+
+            string lastElement = page[page.Count - 1];
+            if (lastElement.Contains("ResumptionToken"))
+            {
+                resumptionToken = lastElement.Substring(16);
+                page.RemoveAt(page.Count - 1);
+            }
+
+            foreach (string eagleId in page)
+            {
+                // Do not add duplicate eagle ids.
+                if (!eagleIds.Contains(eagleId))
+                {
+                    eagleIds.Add(eagleId);
+                }
+            }
+
+            // Has to be after the addition of eagle ids.
+            if (!lastElement.Contains("ResumptionToken"))
+            {
+                break;
             }
         }
 
-        foreach (string eagleId in eagleIds)
-        {
-            Console.WriteLine(eagleId);
-        }
-
+        EagleIds = eagleIds;
+        Logger<OverdueAnalyticsAPI>.Log($"Gathering finished successfully in {Stopwatch.Stop()}. Found {EagleIds.Count} unique eagle ids with {TotalRequests} API calls.", LogLevel.Info);
+        
         return 0;
+    }
+
+    public static List<string> GetEagleIds()
+    {
+        return EagleIds;
     }
 }
