@@ -5,6 +5,7 @@ public class SensitiveInfoJson
     public required string Analytics { get; set; }
     public required string DevelopmentServer { get; set; }
     public required string OverdueReportUrl { get; set; }
+    public required string GetUserDetailsUrl { get; set; }
 }
 
 public class SensitiveInfo
@@ -12,6 +13,7 @@ public class SensitiveInfo
     public static string AnalyticsAPIKey = "";
     public static string DevelopmentServerAPIKey = "";
     public static string OverdueReportUrl = "";
+    public static string GetUserDetailsUrl = "";
 
     public static int Init()
     {
@@ -23,6 +25,7 @@ public class SensitiveInfo
             AnalyticsAPIKey = json.Analytics;
             DevelopmentServerAPIKey = json.DevelopmentServer;
             OverdueReportUrl = json.OverdueReportUrl;
+            GetUserDetailsUrl = json.GetUserDetailsUrl;
         }
         catch (Exception e)
         {
