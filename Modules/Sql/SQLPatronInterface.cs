@@ -38,7 +38,7 @@ public class SQLPatronInterface
         }
         catch (Exception e)
         {
-            Logger<SQLInterface>.Log($"Failed to get patron id from eagle id: {e.Message}", LogLevel.Error);
+            Logger<SQLPatronInterface>.Log($"Failed to get patron id from eagle id: {e.Message}", LogLevel.Error);
             return -15; // Negative error code because the id cannot be negative.
         }
     }

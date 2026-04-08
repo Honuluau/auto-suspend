@@ -48,6 +48,12 @@ public class AutoSuspend
             return patronInformationAPI;
         }
 
+        int loansAPI = await LoansAPI.GetLoansForEagleIds(httpClient, EagleIds);
+        if (loansAPI != 0)
+        {
+            return loansAPI;
+        }
+
         SQLInterface.ConsolidateLoans();
         NoteAnalysis.AnalyzeNotes();
         return 0;

@@ -58,7 +58,7 @@ public class PatronInformationAPI
             }
         }
 
-        Logger<PatronInformationAPI>.Log($"Finished retrieving patorn information in {Stopwatch.Stop()} with {TotalRequests} API requests. {alreadyExists} patrons were already listed.", LogLevel.Info);
+        Logger<PatronInformationAPI>.Log($"Finished retrieving patron information in {Stopwatch.Stop()} with {TotalRequests} API requests. {alreadyExists} patrons were already listed.", LogLevel.Info);
         return 0;
     }
 }
