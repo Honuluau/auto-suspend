@@ -22,7 +22,7 @@ public class LoanAPI
     public required string item_barcode { get; set; }
     public required string mms_id { get; set; }
     public required string title { get; set; }
-    public required string description { get; set; }
+    public string? description { get; set; } // For some reason not all items have a description.
     public required ItemPolicyAPI item_policy { get; set; }
 
     public CircDeskAPI? return_circ_desk { get; set; }

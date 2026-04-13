@@ -1,4 +1,5 @@
 using System.Data;
+using System.Numerics;
 using Microsoft.Data.Sqlite;
 
 public class SQLItemInterface // This is extremely similar to patron interface. Maybe want to merge classes.
@@ -63,6 +64,12 @@ public class SQLItemInterface // This is extremely similar to patron interface. 
                     using (SqliteCommand insertCommand = new SqliteCommand(insert, connection))
                     {
                         insertCommand.Parameters.AddWithValue("$mms_id", mms_id);
+                        insertCommand.Parameters.AddWithValue("$barcode", barcode);
+                        insertCommand.Parameters.AddWithValue("$title", title);
+                        insertCommand.Parameters.AddWithValue("$description", description);
+                        insertCommand.Parameters.AddWithValue("$policy", policy);
+
+                        insertCommand.ExecuteNonQuery();
                     }
 
                     connection.Close();
