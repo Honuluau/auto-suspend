@@ -38,6 +38,7 @@ public class LoansAPI
                 {
                     // No error.
                     Console.WriteLine($"Patron {patronId} with item {itemId}.");
+                    SQLLoanInterface.InsertLoan(loan.loan_id, loan.circ_desk.value!, patronId, itemId, loan.loan_date, loan.due_date);
                 }
             }
         }
