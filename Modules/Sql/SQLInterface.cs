@@ -43,17 +43,17 @@ public class SQLInterface
         )
     """;
 
-    public static readonly string CREATE_NOTE_TABLE_COMMAND = """
+    public static readonly string CREATE_NOTE_TABLE_COMMAND = """ 
         CREATE TABLE IF NOT EXISTS note (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             patron_id INTEGER,
             date TEXT,
             status INTEGER,
-            updated INTEGER, // 0 = NOT UPDATED, NOTE NEEDS TO BE PUBLISHED TO ALMA // 1 = UPDATED, NO ACTION NECESSARY.
+            updated INTEGER, 
 
             FOREIGN KEY(patron_id) REFERENCES patron(id)
         )
-    """;
+    """; // 0 = NOT UPDATED, NOTE NEEDS TO BE PUBLISHED TO ALMA // 1 = UPDATED, NO ACTION NECESSARY.
 
     public static readonly string CREATE_NOTE_LOAN_TABLE_COMMAND = """
         CREATE TABLE IF NOT EXISTS note_loan (

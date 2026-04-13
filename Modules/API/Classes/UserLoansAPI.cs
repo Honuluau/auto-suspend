@@ -30,6 +30,6 @@ public class LoanAPI
 
 public class UserLoansAPI
 {
-    public required List<LoanAPI> item_loan { get; set; }
+    public List<LoanAPI>? item_loan { get; set; }
     public required int total_record_count { get; set; }
 }

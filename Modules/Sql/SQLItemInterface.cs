@@ -48,6 +48,10 @@ public class SQLItemInterface // This is extremely similar to patron interface. 
         {
             description = "None";
         }
+        if (policy == null)
+        {
+            description = "NO POLICY FOUND";
+        }
 
 
         try
