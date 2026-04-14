@@ -40,7 +40,7 @@ public class AutoSuspend
         List<string> EagleIds = OverdueAnalyticsAPI.GetEagleIds();
         */
         // Supplmentary way of getting eagle ids without stress testing the API.
-        List<string> EagleIds = File.ReadAllLines("eagleids.txt").ToList();
+        List<string> EagleIds = File.ReadAllLines("eagleids copy.txt").ToList();
 
         int patronInformationAPI = await PatronInformationAPI.RetrievePatronInformation(httpClient, EagleIds);
         if (patronInformationAPI != 0)

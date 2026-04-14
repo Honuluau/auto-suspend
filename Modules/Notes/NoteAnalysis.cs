@@ -70,7 +70,7 @@ public class NoteAnalysis
         }
         catch (Exception e)
         {
-            Logger<NoteAnalysis>.Log($"Something went wrong analyzing notes. {e.Message}", LogLevel.Error);
+            Logger<NoteAnalysis>.Log($"Something went wrong analyzing notes. {e.Message}.\n{e.StackTrace}", LogLevel.Error);
             return 10;
         }
 
@@ -125,17 +125,23 @@ public class NoteAnalysis
                         if (longestOverdue > longestGrace)
                         {
                             command.Parameters.AddWithValue("$status", "SUSPENDED");
-                            command.Parameters.AddWithValue("$updated", "1"); // Value is unaligned with Alma (Needs Update).
+                            command.Parameters.AddWithValue("$updated", "0"); // Value is unaligned with Alma (Needs Update).
                         } 
+                        else // Items are not returned but the user is still within the grace period before being overdue.
+                        {
+                            command.Parameters.AddWithValue("$status", DBNull.Value);
+                            command.Parameters.AddWithValue("$updated", "1");
+                        }
                     }
                     else if (longestOverdue <= longestGrace) // If all items are already returned and within grace period, then there should not be a suspension.
                     {
                         command.Parameters.AddWithValue("$status", "GRACE");
+                        command.Parameters.AddWithValue("$updated", "1");
                     }
                     else // All items are returned, but over the grace period. Create a suspension that has already been resolved.
                     {
                         command.Parameters.AddWithValue("$status", "RESOLVED");
-                        command.Parameters.AddWithValue("$updated", "1");
+                        command.Parameters.AddWithValue("$updated", "0");
                     }
 
                     command.ExecuteNonQuery();
