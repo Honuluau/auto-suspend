@@ -21,8 +21,7 @@ public class SQLInterface
             mms_id TEXT,
             barcode TEXT,
             title TEXT,
-            description TEXT,
-            policy TEXT
+            description TEXT
         )
     """;
 
@@ -34,6 +33,8 @@ public class SQLInterface
             in_circ_desk TEXT,
             patron_id INTEGER,
             item_id INTEGER,
+            policy TEXT,
+            preferred_email TEXT,
             loan_date TEXT,
             due_date TEXT,
             return_date TEXT,
