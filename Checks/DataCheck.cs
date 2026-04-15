@@ -1,7 +1,7 @@
 public class DataCheck
 {
 
-    public static readonly string databaseFileName = "database.db";
+    private static string databaseFileName = "database.db";
 
     public static int createDatabase(string path)
     {
@@ -16,9 +16,9 @@ public class DataCheck
                 return initializedSQL;
             }
         }
-        catch (IOException e)
+        catch (Exception e)
         {
-            Logger<DataCheck>.Log($"Cannot create database.db: {e.Message}", LogLevel.Error);
+            Logger<DataCheck>.Error("Cannot create database.db", e);
             return 7;
         }
 

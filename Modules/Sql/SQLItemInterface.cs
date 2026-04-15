@@ -37,7 +37,7 @@ public class SQLItemInterface // This is extremely similar to patron interface. 
         }
         catch (Exception e)
         {
-            Logger<SQLItemInterface>.Log($"Failed to get item id from barcode: {e.Message}", LogLevel.Error);
+            Logger<SQLItemInterface>.Log("Failed to get item id from barcode", e);
             return -17;
         }
     }
@@ -86,7 +86,7 @@ public class SQLItemInterface // This is extremely similar to patron interface. 
         }
         catch (Exception e)
         {
-            Logger<SQLItemInterface>.Log($"An error occurred when inserting an item into database: {e.Message}", LogLevel.Error);
+            Logger<SQLItemInterface>.Log("An error occured when inserting an item into database", e);
             return 16;
         }
         return 0;

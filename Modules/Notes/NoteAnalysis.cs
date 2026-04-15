@@ -70,7 +70,7 @@ public class NoteAnalysis
         }
         catch (Exception e)
         {
-            Logger<NoteAnalysis>.Log($"Something went wrong analyzing notes. {e.Message}.\n{e.StackTrace}", LogLevel.Error);
+            Logger<NoteAnalysis>.Error("Something went wrong analyzing notes.", e);
             return 10;
         }
 
@@ -148,9 +148,9 @@ public class NoteAnalysis
                 }
             }
         }
-        catch (IOException e)
+        catch (Exception e)
         {
-            Logger<NoteAnalysis>.Log($"Error updating Null Note: {e.Message}", LogLevel.Error);
+            Logger<NoteAnalysis>.Error("Error updating Null Note", e);
             return 11;
         }
 

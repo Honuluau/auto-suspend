@@ -12,9 +12,9 @@ public class Config
         {
             FileStream fs = File.Create(path);
         }
-        catch (IOException e)
+        catch (Exception e)
         {
-            Logger<Config>.Log($"Failed to create config file: {e.Message}", LogLevel.Error);
+            Logger<Config>.Error("Failed to create config file", e);
             return 5;
         }
         return 0;

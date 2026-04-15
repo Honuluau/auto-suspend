@@ -19,7 +19,7 @@ public class LoansAPI
         }
         catch (Exception e)
         {
-            Logger<LoansAPI>.Log($"An error occured when looking up loans for eagle id: {e.Message}", LogLevel.Error);
+            Logger<LoansAPI>.Error("An error occured when looking up for loans for eagle id", e);
             File.WriteAllText($"/missing loans/{eagleId}.txt", jsonString);
             return null; // switch to null
         }
@@ -53,7 +53,7 @@ public class LoansAPI
             }
             catch (Exception e)
             {
-                Logger<LoansAPI>.Log($"An error occured while getting loans for {eagleId} in a list. {e.Message}", LogLevel.Error);
+                Logger<LoansAPI>.Error($"An error occured while getting loans for {eagleId} in a list", e);
                 return 18;
             }
         }

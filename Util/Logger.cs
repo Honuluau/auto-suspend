@@ -9,6 +9,11 @@ public static class Logger<T>
         Console.WriteLine(log);
     }
 
+    public static void Error(string message, Exception e)
+    {
+        Log($"{message}. ( {e.Message} ).\n{e.StackTrace}", LogLevel.Error);
+    }
+
     // This ensures that the Log file exists and it is the first method called by Auto-Suspend.
     public static bool InitializeLog()
     {

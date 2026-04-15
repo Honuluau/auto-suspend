@@ -2,7 +2,7 @@ using System.Net.NetworkInformation;
 using System.Xml;
 using System.Xml.Linq;
 
-public class OverdueAnalyticsAPI
+public class OverdueAnalyticsAPIDeprecated
 {
     private static List<string> EagleIds = new List<string>();
     private static int TotalRequests = 0;
@@ -51,14 +51,14 @@ public class OverdueAnalyticsAPI
                 }
                 else
                 {
-                    Logger<OverdueAnalyticsAPI>.Log($"An eagle id is NULL in the xml return data.", LogLevel.Error);
+                    Logger<OverdueAnalyticsAPIDeprecated>.Log($"An eagle id is NULL in the xml return data.", LogLevel.Error);
                     return ["FAIL"];
                 }
             }
         }
         catch (Exception e)
         {
-            Logger<OverdueAnalyticsAPI>.Log($"Failed to Get Page of Eagle Ids: {e.Message}", LogLevel.Error);
+            Logger<OverdueAnalyticsAPIDeprecated>.Error("Failed to get page of eagle ids", e);
             return ["FAIL"];
         }
 
@@ -79,7 +79,7 @@ public class OverdueAnalyticsAPI
 
         // Get pages, check for resumption token, if there is one: continue else stop.
         Stopwatch.Start();
-        Logger<OverdueAnalyticsAPI>.Log("Gathering eagle ids with overdue loans start.", LogLevel.Info);
+        Logger<OverdueAnalyticsAPIDeprecated>.Log("Gathering eagle ids with overdue loans start.", LogLevel.Info);
         while (true)
         {
             List<string> page = await GetPageOfEagleIds(httpClient, resumptionToken);
@@ -119,7 +119,7 @@ public class OverdueAnalyticsAPI
         }
 
         EagleIds = eagleIds;
-        Logger<OverdueAnalyticsAPI>.Log($"Gathering finished successfully in {Stopwatch.Stop()}. Found {EagleIds.Count} unique eagle ids with {TotalRequests} API calls.", LogLevel.Info);
+        Logger<OverdueAnalyticsAPIDeprecated>.Log($"Gathering finished successfully in {Stopwatch.Stop()}. Found {EagleIds.Count} unique eagle ids with {TotalRequests} API calls.", LogLevel.Info);
         
         return 0;
     }

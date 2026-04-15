@@ -18,7 +18,7 @@ public class PatronInformationAPI
         }
         catch (Exception e)
         {
-            Logger<PatronInformationAPI>.Log($"An error occured while looking up a patron: {e.Message}", LogLevel.Error);
+            Logger<PatronInformationAPI>.Error("An error occured while looking up a patron", e);
             return null;
         }
     }

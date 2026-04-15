@@ -31,27 +31,11 @@ public class AutoSuspend
         }
 
         // Development Stuff -- Subject to Change
-        /*
-        int overdueAnalyticsAPI = await OverdueAnalyticsAPI.GatherOverdueEagleIds(httpClient);
+
+        int overdueAnalyticsAPI = await OverdueAnalytics.GatherOverdueAnalytics(httpClient);
         if (overdueAnalyticsAPI != 0)
         {
             return overdueAnalyticsAPI;
-        }
-        List<string> EagleIds = OverdueAnalyticsAPI.GetEagleIds();
-        */
-        // Supplmentary way of getting eagle ids without stress testing the API.
-        List<string> EagleIds = File.ReadAllLines("eagleids copy.txt").ToList();
-
-        int patronInformationAPI = await PatronInformationAPI.RetrievePatronInformation(httpClient, EagleIds);
-        if (patronInformationAPI != 0)
-        {
-            return patronInformationAPI;
-        }
-
-        int loansAPI = await LoansAPI.GetLoansForEagleIds(httpClient, EagleIds);
-        if (loansAPI != 0)
-        {
-            return loansAPI;
         }
 
         SQLInterface.ConsolidateLoans();

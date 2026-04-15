@@ -8,7 +8,7 @@ public class SQLInterface
     public static readonly string CREATE_PATRON_TABLE_COMMAND = """
         CREATE TABLE IF NOT EXISTS patron (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            eagle_id TEXT,
+            user_primary_identifier TEXT,
             first_name TEXT,
             last_name TEXT,
             user_group TEXT
@@ -107,7 +107,7 @@ public class SQLInterface
         }
         catch (Exception e)
         {
-            Logger<SQLInterface>.Log($"Failed to Initialize SQL database: {e.Message}", LogLevel.Error);
+            Logger<SQLInterface>.Error("Failed to Initialize SQL database", e);
             return 8;
         }
 
@@ -186,7 +186,7 @@ public class SQLInterface
         }
         catch (Exception e)
         {
-            Logger<SQLInterface>.Log($"Failed to consolidate loans into notes: {e.Message}", LogLevel.Error);
+            Logger<SQLInterface>.Error("Failed to consolidate loans into notes", e);
             return 9;
         }
 
@@ -215,7 +215,7 @@ public class SQLInterface
         }
         catch (Exception e)
         {
-            Logger<SQLInterface>.Log($"Failed to get instance number for note id: {noteId}.\t{e.Message}", LogLevel.Error);
+            Logger<SQLInterface>.Error($"Failed to get instance number for note id: {noteId}", e);
             return 0;
         }
     }
@@ -255,7 +255,7 @@ public class SQLInterface
         }
         catch (Exception e)
         {
-            Logger<SQLInterface>.Log($"Failed to get item from id: {itemId}\t{e.Message}", LogLevel.Error);
+            Logger<SQLInterface>.Error($"Failed to get item from id {itemId}", e);
             return null;
         }
     }
@@ -313,7 +313,7 @@ public class SQLInterface
         }
         catch (Exception e)
         {
-            Logger<SQLInterface>.Log($"Failed to get loans for note: {noteId}\t{e.Message}", LogLevel.Error);
+            Logger<SQLInterface>.Error($"Failed to get loans for note: {noteId}", e);
             return null;
         }
     }

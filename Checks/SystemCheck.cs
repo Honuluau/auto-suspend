@@ -25,9 +25,9 @@ public class SystemCheck
                 return false;
             }
         }
-        catch
+        catch (Exception e)
         {
-            Logger<SystemCheck>.Log("No internet.", LogLevel.Error);
+            Logger<SystemCheck>.Error("No internet", e);
             return false;
         }
     }
@@ -60,9 +60,9 @@ public class SystemCheck
                 Directory.CreateDirectory(path);
                 Logger<SystemCheck>.Log("Created main directory.", LogLevel.Info);
             }
-            catch (IOException e)
+            catch (Exception e)
             {
-                Logger<SystemCheck>.Log($"Main directory unable to be created: {e.Message}", LogLevel.Error);
+                Logger<SystemCheck>.Error("Main directory unable to be created", e);
                 return 4;
             }
         }

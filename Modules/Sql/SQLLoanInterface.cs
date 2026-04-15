@@ -79,7 +79,7 @@ public class SQLLoanInterface
         }
         catch (Exception e)
         {
-            Logger<SQLLoanInterface>.Log($"An error occurred when inserting a loan into database: {e.Message}", LogLevel.Error);
+            Logger<SQLLoanInterface>.Error("An error occured when inserting a loan into database", e);
             return 20;
         }
 

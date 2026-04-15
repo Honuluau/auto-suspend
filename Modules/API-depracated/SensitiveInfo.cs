@@ -6,6 +6,7 @@ public class SensitiveInfoJson
     public required string DevelopmentServer { get; set; }
     public required string OverdueReportUrl { get; set; }
     public required string GetUserDetailsUrl { get; set; }
+    public required string CustomOverdueReportUrl { get; set; }
 }
 
 public class SensitiveInfo
@@ -14,6 +15,7 @@ public class SensitiveInfo
     public static string DevelopmentServerAPIKey = "";
     public static string OverdueReportUrl = "";
     public static string GetUserDetailsUrl = "";
+    public static string CustomOverdueReportUrl = "";
 
     public static int Init()
     {
@@ -26,10 +28,11 @@ public class SensitiveInfo
             DevelopmentServerAPIKey = json.DevelopmentServer;
             OverdueReportUrl = json.OverdueReportUrl;
             GetUserDetailsUrl = json.GetUserDetailsUrl;
+            CustomOverdueReportUrl = json.CustomOverdueReportUrl;
         }
         catch (Exception e)
         {
-            Logger<SensitiveInfo>.Log($"An error occured while initializing API Keys: {e.Message}", LogLevel.Error);
+            Logger<SensitiveInfo>.Error("An error occured while initializing API keys", e);
             return 12;
         }
 
