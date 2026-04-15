@@ -50,6 +50,40 @@ public class OverdueAnalytics
 
     public static List<Overdue> Overdues = new List<Overdue>();
 
+    private static int InsertOverdue(Overdue overdue)
+    {
+        try
+        {
+            // Insert Patron
+            SQLInterface.InsertData("patron", ["user_primary_identifier", "first_name", "last_name", "user_group"], [overdue.UserPrimaryIdentifier, overdue.FirstName, overdue.LastName, overdue.UserGroup], 0);
+
+            // Insert Item
+            SQLInterface.InsertData("item", ["barcode", "title"], [overdue.Barcode, overdue.Title], 0);
+
+            // Insert Loan
+            int patronId = SQLInterface.GetIdFromTable("patron", "user_primary_identifier", overdue.UserPrimaryIdentifier);
+            int itemId = SQLInterface.GetIdFromTable("item", "barcode", overdue.Barcode);
+
+            if (patronId > 0 && itemId > 0)
+            {
+                SQLInterface.InsertData("loan", ["alma_id", "out_circ_desk", "patron_id", "item_id", "policy", "preferred_email", "loan_date", "due_date"], [
+                    overdue.ItemLoanId, overdue.CircDesk, patronId, itemId, overdue.ItemPolicy, overdue.PreferredEmail, overdue.LoanDate, overdue.DueDate], 0);
+            }
+            else
+            {
+                Logger<OverdueAnalytics>.Log($"Could not insert overdue because patron or item id is not greater than 0.\npatronId:\t{patronId}\nitemId:\t{itemId}", LogLevel.Error);
+                return 23;
+            }
+
+            return 0;
+        }
+        catch (Exception e)
+        {
+            Logger<OverdueAnalytics>.Error("Failed to insert overdue", e);
+            return 23;
+        }
+    }
+
     private static async Task<string?> GetPageOfOverdues(HttpClient httpClient, string? resumptionToken)
     {
         string? newResumptionToken = null; // Default to no resumption.
@@ -122,7 +156,8 @@ public class OverdueAnalytics
         while (true)
         {
             string? newResumptionToken = await GetPageOfOverdues(httpClient, resumptionToken);
-            if (newResumptionToken == null) {
+            if (newResumptionToken == null)
+            {
                 break;
             }
             else if (newResumptionToken == "Fail")
@@ -132,6 +167,15 @@ public class OverdueAnalytics
             else
             {
                 resumptionToken = newResumptionToken;
+            }
+        }
+
+        foreach (Overdue overdue in Overdues)
+        {
+            int success = InsertOverdue(overdue);
+            if (success != 0)
+            {
+                return success;
             }
         }
 

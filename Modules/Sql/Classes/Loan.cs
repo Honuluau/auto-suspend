@@ -6,12 +6,14 @@ public class Loan
     public string InCircDesk { get; set; }
     public int PatronId { get; set; }
     public Item Item { get; set; }
+    public string Policy { get; set; }
+    public string PreferredEmail { get; set; }
     public DateTime LoanDate { get; set; }
     public DateTime DueDate { get; set; }
     public DateTime? ReturnDate { get; set; }
     public int DaysOfGrace { get; set; }
 
-    public Loan(int id, string almaId, string outCircDesk, string inCircDesk, int patronId, Item item, DateTime loanDate, DateTime dueDate, DateTime? returnDate)
+    public Loan(int id, string almaId, string outCircDesk, string inCircDesk, int patronId, Item item, string policy, string preferredEmail, DateTime loanDate, DateTime dueDate, DateTime? returnDate)
     {
         this.Id = id;
         this.AlmaId = almaId;
@@ -19,6 +21,8 @@ public class Loan
         this.InCircDesk = inCircDesk;
         this.PatronId = patronId;
         this.Item = item;
+        this.Policy = policy;
+        this.PreferredEmail = preferredEmail;
         this.LoanDate = loanDate;
         this.DueDate = dueDate;
         this.ReturnDate = returnDate;
@@ -28,7 +32,8 @@ public class Loan
         if (loanPeriod.Days <= 1) // 24 Hour Loan
         {
             this.DaysOfGrace = 1;
-        } else
+        }
+        else
         {
             this.DaysOfGrace = 3;
         }

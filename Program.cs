@@ -38,10 +38,18 @@ public class AutoSuspend
             return overdueAnalyticsAPI;
         }
 
-        SQLInterface.ConsolidateLoans();
-        NoteAnalysis.AnalyzeNotes();
 
-        SQLInterface.InsertData("patron", ["user_primary_identifier", "first_name", "last_name", "user_group"], ["901458044", "Dylan", "Dykes", "ST"], 0);
+        int consolidateLoans = SQLInterface.ConsolidateLoans();
+        if (consolidateLoans != 0)
+        {
+            return consolidateLoans;
+        }
+
+        int noteAnalysis = NoteAnalysis.AnalyzeNotes();
+        if (noteAnalysis != 0)
+        {
+            return noteAnalysis;
+        }
         return 0;
     }
 

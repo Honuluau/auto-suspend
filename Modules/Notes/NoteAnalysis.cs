@@ -33,7 +33,7 @@ public class NoteAnalysis
 
                     foreach (DataRow row in notesTable.Rows)
                     {
-                        // Converting SQL Values to C# Values.
+                        // Converting SQL Note to C# Values.
                         int id = Convert.ToInt32(row[0]);
                         int patron_id = Convert.ToInt32(row[1]);
                         DateTime date = ParseDates.ConvertStringToDateTime(row[2].ToString()!);
@@ -106,6 +106,8 @@ public class NoteAnalysis
                 longestOverdue = overdue.Days;
             }
         }
+
+        Console.WriteLine($"{longestOverdue}\t{longestGrace}\t{allReturned}");
 
         // Update SQL.
         try
