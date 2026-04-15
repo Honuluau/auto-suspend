@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Data;
 using System.IO.Pipelines;
 using Microsoft.Data.Sqlite;
@@ -5,7 +6,7 @@ using SQLitePCL;
 
 public class SQLInterface
 {
-    public static readonly string CREATE_PATRON_TABLE_COMMAND = """
+    private static readonly string CREATE_PATRON_TABLE_COMMAND = """
         CREATE TABLE IF NOT EXISTS patron (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_primary_identifier TEXT,
@@ -15,7 +16,7 @@ public class SQLInterface
         )
     """;
 
-    public static readonly string CREATE_ITEM_TABLE_COMMAND = """
+    private static readonly string CREATE_ITEM_TABLE_COMMAND = """
         CREATE TABLE IF NOT EXISTS item (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             mms_id TEXT,
@@ -25,7 +26,7 @@ public class SQLInterface
         )
     """;
 
-    public static readonly string CREATE_LOAN_TABLE_COMMAND = """
+    private static readonly string CREATE_LOAN_TABLE_COMMAND = """
         CREATE TABLE IF NOT EXISTS loan (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             alma_id TEXT,
@@ -44,7 +45,7 @@ public class SQLInterface
         )
     """;
 
-    public static readonly string CREATE_NOTE_TABLE_COMMAND = """ 
+    private static readonly string CREATE_NOTE_TABLE_COMMAND = """ 
         CREATE TABLE IF NOT EXISTS note (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             patron_id INTEGER,
@@ -56,7 +57,7 @@ public class SQLInterface
         )
     """; // 0 = NOT UPDATED, NOTE NEEDS TO BE PUBLISHED TO ALMA // 1 = UPDATED, NO ACTION NECESSARY.
 
-    public static readonly string CREATE_NOTE_LOAN_TABLE_COMMAND = """
+    private static readonly string CREATE_NOTE_LOAN_TABLE_COMMAND = """
         CREATE TABLE IF NOT EXISTS note_loan (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             note_id INTEGER,
@@ -67,7 +68,7 @@ public class SQLInterface
         )
     """;
 
-    public static readonly string CREATE_PERM_SUSPEND_TABLE_COMMAND = """
+    private static readonly string CREATE_PERM_SUSPEND_TABLE_COMMAND = """
         CREATE TABLE IF NOT EXISTS perm_suspend (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             patron_id INTEGER,
@@ -77,7 +78,7 @@ public class SQLInterface
         )
     """;
 
-    public static readonly string[] CREATE_TABLE_COMMANDS = [CREATE_PATRON_TABLE_COMMAND, CREATE_ITEM_TABLE_COMMAND, CREATE_LOAN_TABLE_COMMAND,
+    private static readonly string[] CREATE_TABLE_COMMANDS = [CREATE_PATRON_TABLE_COMMAND, CREATE_ITEM_TABLE_COMMAND, CREATE_LOAN_TABLE_COMMAND,
         CREATE_NOTE_TABLE_COMMAND, CREATE_NOTE_LOAN_TABLE_COMMAND, CREATE_PERM_SUSPEND_TABLE_COMMAND];
 
     public static string CONNECTION_STRING { get; set; } = "";
@@ -315,6 +316,114 @@ public class SQLInterface
         {
             Logger<SQLInterface>.Error($"Failed to get loans for note: {noteId}", e);
             return null;
+        }
+    }
+
+    // Get a row's id from a table in the SQL Database
+    public static int GetIdFromTable(string tableName, string columnName, string variable)
+    {
+        try
+        {
+            using(SqliteConnection connection = new SqliteConnection(CONNECTION_STRING))
+            {
+                connection.Open();
+
+                string query = $"SELECT * FROM {tableName} WHERE {columnName} = $var";
+                using(SqliteCommand command = new SqliteCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("$var", variable);
+
+                    SqliteDataReader reader = command.ExecuteReader();
+                    DataTable table = new DataTable();
+                    table.Load(reader);
+
+                    connection.Close();
+
+                    if (table.Rows.Count > 0)
+                    {
+                        Console.WriteLine($"{table.Rows.Count}\t{tableName}\t{columnName}\t{variable}");
+                        return Convert.ToInt32(table.Rows[0][0]);
+                    }
+                    else
+                    {
+                        return 0;
+                    }
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Logger<SQLInterface>.Error($"Failed to get {tableName} id from {columnName} = {variable}", e);
+            return -21;
+        }
+    }
+
+    // [a, b] = (a, b)
+    public static string ConvertStringListIntoSQLTuple(string[] stringList)
+    {
+        string result = "(";
+
+        foreach(string str in stringList)
+        {
+            result = $"{result}{str}, ";
+        }
+
+        return $"{result.Substring(0, result.Length-2)})";
+    }
+
+    // Turn number of variables into an SQL Tuple
+    public static string GetPlaceholdersForSQLTuple(int count)
+    {
+        string result = "(";
+
+        for (int i = 0; i < count; i++)
+        {
+            result = $"{result}$var{i}, ";
+        }
+
+        return $"{result.Substring(0, result.Length-2)})";
+    }
+
+    /*
+    Insert one row of information into any table. Columns and Variables should be the same length with matching variables.
+    checkIndex is the variable at x in columns and variables that the method will use to retrieve the id.
+    */
+    public static int InsertData(string tableName, string[] columns, string[] variables, int checkIndex)
+    {
+        try
+        {
+            int id = GetIdFromTable(tableName, columns[checkIndex], variables[checkIndex]);
+            if (id == 0)
+            {
+                using (SqliteConnection connection = new SqliteConnection(CONNECTION_STRING))
+                {
+                    connection.Open();
+
+                    string insertText = $"INSERT INTO {tableName} {ConvertStringListIntoSQLTuple(columns)} VALUES {GetPlaceholdersForSQLTuple(variables.Length)}";
+                    Console.WriteLine(insertText);
+                    using (SqliteCommand insertCommand = new SqliteCommand(insertText, connection))
+                    {
+                        for (int i = 0; i < variables.Length; i++)
+                        {
+                            insertCommand.Parameters.AddWithValue($"$var{i}", variables[i]);
+                        }
+
+                        insertCommand.ExecuteNonQuery();
+                    }
+
+                    connection.Close();
+                }
+            }
+            else if (id < 0) // Error.
+            {
+                return id; 
+            }
+            return 0;
+        }
+        catch(Exception e)
+        {
+            Logger<SQLInterface>.Error($"Failed to write ({columns}) to {tableName} with ({variables})", e);
+            return 22;
         }
     }
 }

@@ -40,6 +40,8 @@ public class AutoSuspend
 
         SQLInterface.ConsolidateLoans();
         NoteAnalysis.AnalyzeNotes();
+
+        SQLInterface.InsertData("patron", ["user_primary_identifier", "first_name", "last_name", "user_group"], ["901458044", "Dylan", "Dykes", "ST"], 0);
         return 0;
     }
 
