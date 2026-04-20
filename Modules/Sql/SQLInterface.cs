@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Data;
 using System.IO.Pipelines;
+using System.Reflection.Metadata;
 using Microsoft.Data.Sqlite;
 using SQLitePCL;
 
@@ -288,8 +289,8 @@ public class SQLInterface
         return new Loan(id, almaId, outCircDesk, inCircDesk, patronId, item, policy, preferredEmail, loanDate, dueDate, returnDate);
     }
 
-    // Get all loans (including item) pertaining to notes
-    public static Loan[]? GetLoansForNote(int noteId)
+    // Get loans
+    public static Loan[]? GetLoans(string query, Tuple<string, object>[]? parameters)
     {
         try
         {
@@ -297,10 +298,16 @@ public class SQLInterface
             {
                 connection.Open();
 
-                string query = "SELECT * FROM loan JOIN note_loan ON loan.id = note_loan.loan_id WHERE note_loan.note_id = $noteId";
                 using (SqliteCommand command = new SqliteCommand(query, connection))
                 {
-                    command.Parameters.AddWithValue("$noteId", noteId);
+                    if (parameters != null)
+                    {
+                        foreach (Tuple<string, object> parameter in parameters)
+                        {
+                            command.Parameters.AddWithValue(parameter.Item1, parameter.Item2);
+                        }
+                    }
+
                     SqliteDataReader reader = command.ExecuteReader();
                     DataTable loansTable = new DataTable();
                     loansTable.Load(reader);
@@ -319,6 +326,28 @@ public class SQLInterface
         }
         catch (Exception e)
         {
+            Logger<SQLInterface>.Error($"An error occurred while getting notes.", e);
+            return null;
+        }
+    }
+
+    // Get all loans (including item) pertaining to notes
+    public static Loan[]? GetLoansForNote(int noteId)
+    {
+        try
+        {
+            // Set up arguments to get loans.
+            string query = "SELECT * FROM loan JOIN note_loan ON loan.id = note_loan.loan_id WHERE note_loan.note_id = $noteId";
+            Tuple<string, object>[] parameters =
+            {
+              new Tuple<string, object>("$noteId", noteId)
+            };
+
+            Loan[]? loans = GetLoans(query, parameters);
+            return loans;
+        }
+        catch (Exception e)
+        {
             Logger<SQLInterface>.Error($"Failed to get loans for note: {noteId}", e);
             return null;
         }
@@ -331,12 +360,12 @@ public class SQLInterface
     {
         try
         {
-            using(SqliteConnection connection = new SqliteConnection(CONNECTION_STRING))
+            using (SqliteConnection connection = new SqliteConnection(CONNECTION_STRING))
             {
                 connection.Open();
 
                 string query = $"SELECT * FROM {tableName} WHERE {columnName} = $var";
-                using(SqliteCommand command = new SqliteCommand(query, connection))
+                using (SqliteCommand command = new SqliteCommand(query, connection))
                 {
                     command.Parameters.AddWithValue("$var", variable);
 
@@ -369,12 +398,12 @@ public class SQLInterface
     {
         string result = "(";
 
-        foreach(string str in stringList)
+        foreach (string str in stringList)
         {
             result = $"{result}{str}, ";
         }
 
-        return $"{result.Substring(0, result.Length-2)})";
+        return $"{result.Substring(0, result.Length - 2)})";
     }
 
     // Turn number of variables into an SQL Tuple
@@ -387,7 +416,7 @@ public class SQLInterface
             result = $"{result}$var{i}, ";
         }
 
-        return $"{result.Substring(0, result.Length-2)})";
+        return $"{result.Substring(0, result.Length - 2)})";
     }
 
     /*
@@ -422,14 +451,43 @@ public class SQLInterface
             }
             else if (id < 0) // Error.
             {
-                return id; 
+                return id;
             }
             return 0;
         }
-        catch(Exception e)
+        catch (Exception e)
         {
             Logger<SQLInterface>.Error($"Failed to write ({columns}) to {tableName} with ({variables})", e);
             return 22;
+        }
+    }
+
+
+    public static Loan[]? GetAllNonReturnedLoans()
+    {
+        try
+        {
+            using (SqliteConnection connection = new SqliteConnection(CONNECTION_STRING))
+            {
+                connection.Open();
+
+                string query = "SELECT * FROM loan WHERE return_date IS NULL";
+                using (SqliteCommand command = new SqliteCommand(query, connection))
+                {
+                    SqliteDataReader reader = command.ExecuteReader();
+                    DataTable loansTable = new DataTable();
+                    loansTable.Load(reader);
+                    connection.Close();
+
+                    Loan[] loans = new Loan[loansTable.Rows.Count];
+                    return loans;
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Logger<SQLInterface>.Error("An error occurred retrieving all loans.", e);
+            return null;
         }
     }
 }
