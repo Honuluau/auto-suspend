@@ -107,8 +107,6 @@ public class NoteAnalysis
             }
         }
 
-        Console.WriteLine($"{longestOverdue}\t{longestGrace}\t{allReturned}");
-
         // Update SQL.
         try
         {

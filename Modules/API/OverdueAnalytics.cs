@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.Tracing;
 using System.Net;
 using System.Xml.Linq;
 using System.Xml.XPath;
@@ -25,7 +26,7 @@ public class Overdue // Derived information from the custom fulfillment report c
     public string DueDate { get; set; }
 
     public Overdue(string firstName, string lastName, string userGroup, string userPrimaryIdentifier, string barcode, string title,
-    string circDesk, string itemLoadId, string itemPolicy, string libraryName, string preferredEmail, string loanDate, string dueDate)
+    string circDesk, string itemLoadId, string itemPolicy, string libraryName, string? preferredEmail, string loanDate, string dueDate)
     {
         this.FirstName = firstName;
         this.LastName = lastName;
@@ -37,7 +38,7 @@ public class Overdue // Derived information from the custom fulfillment report c
         this.ItemLoanId = itemLoadId;
         this.ItemPolicy = itemPolicy;
         this.LibraryName = libraryName;
-        this.PreferredEmail = preferredEmail;
+        this.PreferredEmail = (preferredEmail == null) ? "None" : preferredEmail;
         this.LoanDate = loanDate;
         this.DueDate = dueDate;
     }
@@ -127,7 +128,7 @@ public class OverdueAnalytics
                 string title = row.Element(ROWSET + "Column9")!.Value;
                 string itemPolicy = row.Element(ROWSET + "Column10")!.Value;
                 string libraryName = row.Element(ROWSET + "Column11")!.Value;
-                string preferredEmail = row.Element(ROWSET + "Column12")!.Value;
+                string? preferredEmail = row.Element(ROWSET + "Column12")?.Value;
                 string dueDate = row.Element(ROWSET + "Column13")!.Value;
                 string loanDate = row.Element(ROWSET + "Column14")!.Value;
 

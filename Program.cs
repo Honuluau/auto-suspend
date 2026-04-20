@@ -45,11 +45,18 @@ public class AutoSuspend
             return consolidateLoans;
         }
 
+        int returnSystem = ReturnSystem.ProcessMissingOverdues();
+        if (returnSystem != 0)
+        {
+            return returnSystem;
+        }
+
         int noteAnalysis = NoteAnalysis.AnalyzeNotes();
         if (noteAnalysis != 0)
         {
             return noteAnalysis;
         }
+        
         return 0;
     }
 

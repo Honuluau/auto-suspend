@@ -353,6 +353,21 @@ public class SQLInterface
         }
     }
 
+    // Get all loans that have a null value in return_date.
+    public static Loan[]? GetAllNonReturnedLoans()
+    {
+        try
+        {
+            string query = "SELECT * FROM loan WHERE return_date IS NULL";
+            Loan[]? loans = GetLoans(query, null);
+            return loans;
+        }
+        catch (Exception e)
+        {
+            Logger<SQLInterface>.Error("An error occurred retrieving all loans.", e);
+            return null;
+        }
+    }
 
 
     // Get a row's id from a table in the SQL Database
@@ -459,35 +474,6 @@ public class SQLInterface
         {
             Logger<SQLInterface>.Error($"Failed to write ({columns}) to {tableName} with ({variables})", e);
             return 22;
-        }
-    }
-
-
-    public static Loan[]? GetAllNonReturnedLoans()
-    {
-        try
-        {
-            using (SqliteConnection connection = new SqliteConnection(CONNECTION_STRING))
-            {
-                connection.Open();
-
-                string query = "SELECT * FROM loan WHERE return_date IS NULL";
-                using (SqliteCommand command = new SqliteCommand(query, connection))
-                {
-                    SqliteDataReader reader = command.ExecuteReader();
-                    DataTable loansTable = new DataTable();
-                    loansTable.Load(reader);
-                    connection.Close();
-
-                    Loan[] loans = new Loan[loansTable.Rows.Count];
-                    return loans;
-                }
-            }
-        }
-        catch (Exception e)
-        {
-            Logger<SQLInterface>.Error("An error occurred retrieving all loans.", e);
-            return null;
         }
     }
 }
