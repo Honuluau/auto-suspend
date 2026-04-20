@@ -31,6 +31,9 @@ public class AutoSuspend
 
         // Development Stuff -- Subject to Change
 
+        AlmaLoan? loan = await UserFulfillment.SearchLoan("11058564740002950", "901397257");
+
+        /*
         int overdueAnalyticsAPI = await OverdueAnalytics.GatherOverdueAnalytics();
         if (overdueAnalyticsAPI != 0)
         {
@@ -55,6 +58,7 @@ public class AutoSuspend
         {
             return noteAnalysis;
         }
+        */
         
         return 0;
     }

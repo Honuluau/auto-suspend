@@ -2,3 +2,6 @@
 /auto-suspend.sln
 /bin
 /obj
+Modules/Returns/ReturnSystem.cs
+.gitignore
+.gitignore
