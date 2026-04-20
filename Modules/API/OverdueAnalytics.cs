@@ -146,8 +146,9 @@ public class OverdueAnalytics
         return newResumptionToken;
     }
 
-    public static async Task<int> GatherOverdueAnalytics(HttpClient httpClient)
+    public static async Task<int> GatherOverdueAnalytics()
     {
+        HttpClient httpClient = HttpClientHouse.GetHttpClient();
         string? resumptionToken = null;
 
         Logger<OverdueAnalytics>.Log($"Reading overdue analytics through API and writing to database.", LogLevel.Info);

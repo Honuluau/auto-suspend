@@ -3,14 +3,13 @@ using System.Threading.Tasks;
 
 public class AutoSuspend
 {
-    public static readonly HttpClient httpClient = new HttpClient();
     public static readonly string AUTO_SUSPEND_PATH = "/Users/dyl/.auto-suspend/";
     public static readonly int GRACE_DAYS = 3;
 
     static async Task<int> Routine(String[] args)
     {
         // System Check
-        int systemWorks = await SystemCheck.CheckSystem(httpClient, AUTO_SUSPEND_PATH);
+        int systemWorks = await SystemCheck.CheckSystem(AUTO_SUSPEND_PATH);
         if (systemWorks != 0)
         {
             return systemWorks;
@@ -32,7 +31,7 @@ public class AutoSuspend
 
         // Development Stuff -- Subject to Change
 
-        int overdueAnalyticsAPI = await OverdueAnalytics.GatherOverdueAnalytics(httpClient);
+        int overdueAnalyticsAPI = await OverdueAnalytics.GatherOverdueAnalytics();
         if (overdueAnalyticsAPI != 0)
         {
             return overdueAnalyticsAPI;

@@ -93,8 +93,10 @@ public class SystemCheck
         return exitCode;
     }
 
-    public static async Task<int> CheckSystem(HttpClient httpClient, string path)
+    public static async Task<int> CheckSystem(string path)
     {
+        HttpClient httpClient = HttpClientHouse.GetHttpClient();
+
         bool online = await CheckInternetConnection(httpClient);
         if (!online)
         {
