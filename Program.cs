@@ -31,7 +31,23 @@ public class AutoSuspend
 
         // Development Stuff -- Subject to Change
 
-        AlmaLoan? loan = await UserFulfillment.SearchLoan("11058564740002950", "901397257");
+        /*
+        THIS IS FOR THE RETURN SYSETM.
+        AlmaLoan? loan = await UserFulfillment.SearchLoan("11012047580002950", "901458044");
+        if (loan != null)
+        {
+            Console.WriteLine(loan.IsReturned());
+            Console.WriteLine(loan.ReturnDate);
+            Console.WriteLine(ParseDates.ConvertStringToDateTime(loan.ReturnDate).ToString());
+        }
+
+        AlmaLoan? loan2 = await UserFulfillment.SearchLoan("11012048070002950", "901458044");
+        if (loan2 != null)
+        {
+            Console.WriteLine(loan2.IsReturned());
+            Console.WriteLine(loan2.ReturnDate);
+        }
+        */
 
         /*
         int overdueAnalyticsAPI = await OverdueAnalytics.GatherOverdueAnalytics();
