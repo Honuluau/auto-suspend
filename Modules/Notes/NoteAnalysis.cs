@@ -62,7 +62,8 @@ public class NoteAnalysis
     {
         DateTime? mostRecentReturnDate = GetMostRecentReturnDate(note);
         int suspendableInstance = MathUtil.Clamp(note.Instance, 1, Config.Current.SuspensionLengthsPerInstance.Length);
-        int suspensionLengthInDays = Config.Current.SuspensionLengthsPerInstance[suspendableInstance]*7;
+        Console.WriteLine($"Most recent return date is: {mostRecentReturnDate.ToString()}");
+        int suspensionLengthInDays = Config.Current.SuspensionLengthsPerInstance[suspendableInstance-1]*7; // -1 because C# Arrays start at an index = 0.
 
         if (mostRecentReturnDate != null)
         {
@@ -257,8 +258,7 @@ public class NoteAnalysis
 
             if (allReturned == true)
             {
-                DateTime reinstatementDate = GetReinstatementDateForNote(note)!.Value;
-                Logger<NoteAnalysis>.Log($"Note ({note.Id}) has a reinstatement date of {ParseDates.AmericanFormat(reinstatementDate)}", LogLevel.Info);
+                // Update SQL and then continue to AnalyzeReinstatementNote -> Resolved.
             }
         }
         catch (Exception e)
