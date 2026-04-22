@@ -3,6 +3,23 @@ using Microsoft.Data.Sqlite;
 
 public class NoteAnalysis
 {
+    // Check if Note is All Returned.
+    public static bool AllReturned(Note note)
+    {
+        bool returned = true;
+
+        foreach (Loan loan in note.Loans)
+        {
+            if (loan.ReturnDate == null)
+            {
+                returned = false;
+            }
+        }
+
+        return returned;
+    }
+
+
     // Iterate over every note via the database and check if they need updating.
     public static int AnalyzeNotes()
     {
@@ -81,18 +98,12 @@ public class NoteAnalysis
     // Analyze Notes whose Status is NULL
     public static int AnalyzeNullNote(Note note, SqliteConnection connection)
     {
-        bool allReturned = true;
+        bool allReturned = AllReturned(note);
         int longestOverdue = -1;
         int longestGrace = -1;
 
         foreach(Loan loan in note.Loans!)
         {
-            // Check if Returned
-            if (loan.ReturnDate == null)
-            {
-                allReturned = false;
-            }
-
             // Find Longest Grace
             if (loan.DaysOfGrace > longestGrace)
             {

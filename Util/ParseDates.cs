@@ -9,4 +9,9 @@ public class ParseDates
     {
         return DateTime.Today.ToString("yyyy-MM-dd");
     }
+
+    public static string AmericanFormat()
+    {
+        return DateTime.Today.ToString("MMM dd, yyyy");
+    }
 }

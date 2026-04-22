@@ -31,6 +31,10 @@ public class AutoSuspend
 
         // Development Stuff -- Subject to Change
 
+        // NOTE CONCATENATION TESTING
+        Note note = new Note(9, 6, ParseDates.ConvertStringToDateTime("2025-04-28"), StatusType.SUSPENDED, 0, SQLInterface.GetInstance(9));
+        Logger<NoteConcatenation>.Log(NoteConcatenation.FormatNote(note), LogLevel.Debug);
+
         /*
         THIS IS FOR THE RETURN SYSETM.
         AlmaLoan? loan = await UserFulfillment.SearchLoan("11012047580002950", "901458044");

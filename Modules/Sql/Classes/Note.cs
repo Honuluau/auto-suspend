@@ -18,6 +18,8 @@ public class Note
         this.Status = status;
         this.Updated = updated;
         this.Instance = instance;
+
+        InitializeLoans();
     }
 
     public void InitializeLoans()
