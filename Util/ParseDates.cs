@@ -10,8 +10,8 @@ public class ParseDates
         return DateTime.Today.ToString("yyyy-MM-dd");
     }
 
-    public static string AmericanFormat()
+    public static string AmericanFormat(DateTime dateTime)
     {
-        return DateTime.Today.ToString("MMM dd, yyyy");
+        return dateTime.ToString("MMM dd, yyyy");
     }
 }

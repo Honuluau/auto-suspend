@@ -33,13 +33,9 @@ public class AutoSuspend
         // Development Stuff -- Subject to Change
 
         // NOTE CONCATENATION TESTING
+        /*
         Note note = new Note(9, 6, ParseDates.ConvertStringToDateTime("2025-04-28"), StatusType.SUSPENDED, 0, SQLInterface.GetInstance(9));
         Logger<NoteConcatenation>.Log(NoteConcatenation.FormatNote(note), LogLevel.Debug);
-
-        foreach (int i in Config.Current.SuspensionLengthsPerInstance)
-        {
-            Logger<Config>.Log(i.ToString(), LogLevel.Debug);
-        }
 
         /*
         THIS IS FOR THE RETURN SYSETM.
@@ -78,13 +74,15 @@ public class AutoSuspend
         {
             return returnSystem;
         }
+        */
 
+
+        // TESTING WITH NOTE ID = 9
         int noteAnalysis = NoteAnalysis.AnalyzeNotes();
         if (noteAnalysis != 0)
         {
             return noteAnalysis;
         }
-        */
         
         return 0;
     }

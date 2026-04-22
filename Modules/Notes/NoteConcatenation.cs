@@ -26,7 +26,18 @@ public class NoteConcatenation
 
         if (NoteAnalysis.AllReturned(note))
         {
-            statement.Append($"REINSTATEMENT ON ()");
+            int suspendableInstance = MathUtil.Clamp(note.Instance, 1, Config.Current.SuspensionLengthsPerInstance.Length);
+            int suspensionLengthInDays = Config.Current.SuspensionLengthsPerInstance[suspendableInstance]*7;
+            DateTime lastDateOfSuspension = note.Date.AddDays(suspensionLengthInDays);
+
+            if (DateTime.Now > lastDateOfSuspension)
+            {
+                statement.Append($"REINSTATEMENT ON ({ParseDates.AmericanFormat(DateTime.Now.AddDays(suspensionLengthInDays))})");
+            }
+            else
+            {
+                statement.Append($"REINSTATEMENT ON ({ParseDates.AmericanFormat(DateTime.Now.AddDays(suspensionLengthInDays))})");
+            }
         }
         else
         {
@@ -42,6 +53,6 @@ public class NoteConcatenation
         string itemsList = GetItemsList(note);
         string endStatement = GetEndStatement(note);
 
-        return $"Acct. Status: {note.Status.ToString()} @ Instance # {note.Instance} >> Item{(note.Loans.Count() > 1 ? "s": "")} Overdue: {itemsList} >> {endStatement} AS OF ({ParseDates.AmericanFormat()}) --AUTO-SUSPEND ({note.Id})";
+        return $"Acct. Status: {note.Status.ToString()} @ Instance # {note.Instance} >> Item{(note.Loans.Count() > 1 ? "s": "")} Overdue: {itemsList} >> {endStatement} AS OF ({ParseDates.AmericanFormat(DateTime.Now)}) --AUTO-SUSPEND ({note.Id})";
     }
 }

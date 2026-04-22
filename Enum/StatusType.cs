@@ -1,8 +1,9 @@
 public enum StatusType
 {
     NULL,
+    GRACE,
     SUSPENDED,
+    REINSTATEMENT,
     RESOLVED,
-    REINSTATED,
     PERMANENT,
 }
