@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Threading.Tasks;
+using SQLitePCL;
 
 public class AutoSuspend
 {
@@ -34,6 +35,11 @@ public class AutoSuspend
         // NOTE CONCATENATION TESTING
         Note note = new Note(9, 6, ParseDates.ConvertStringToDateTime("2025-04-28"), StatusType.SUSPENDED, 0, SQLInterface.GetInstance(9));
         Logger<NoteConcatenation>.Log(NoteConcatenation.FormatNote(note), LogLevel.Debug);
+
+        foreach (int i in Config.Current.SuspensionLengthsPerInstance)
+        {
+            Logger<Config>.Log(i.ToString(), LogLevel.Debug);
+        }
 
         /*
         THIS IS FOR THE RETURN SYSETM.
