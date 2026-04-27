@@ -283,7 +283,7 @@ public class SQLInterface
         DateTime? returnDate = null;
         if (row[10].ToString() != "")
         {
-            returnDate = ParseDates.ConvertStringToDateTime(row[8].ToString()!);
+            returnDate = ParseDates.ConvertStringToDateTime(row[10].ToString()!);
         }
 
         return new Loan(id, almaId, outCircDesk, inCircDesk, patronId, item, policy, preferredEmail, loanDate, dueDate, returnDate);
@@ -475,5 +475,37 @@ public class SQLInterface
             Logger<SQLInterface>.Error($"Failed to write ({columns}) to {tableName} with ({variables})", e);
             return 22;
         }
+    }
+
+
+
+    public static int SetNoteStatus(int noteId, StatusType status)
+    {
+        try
+        {
+            using(SqliteConnection connection = new SqliteConnection(CONNECTION_STRING))
+            {
+                connection.Open();
+
+                string setCommand = "UPDATE note SET status = $status, updated = $updated WHERE id = $id";
+
+                using (SqliteCommand command = new SqliteCommand(setCommand, connection))
+                {
+                    command.Parameters.AddWithValue("$status", status.ToString());
+                    command.Parameters.AddWithValue("$updated", 0);
+                    command.Parameters.AddWithValue("$id", noteId);
+
+                    command.ExecuteNonQuery();
+                    connection.Close();
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Logger<SQLInterface>.Error($"Failed to set note status {status.ToString()} to note ({noteId})", e);
+            return 26;
+        }
+
+        return 0;
     }
 }
