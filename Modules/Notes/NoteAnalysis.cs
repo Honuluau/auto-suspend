@@ -183,6 +183,54 @@ public class NoteAnalysis
     // Analyze Notes whose Status is NULL
     public static int AnalyzeNullNote(Note note, SqliteConnection connection)
     {
+        // To go from Null -> Grace, check to see if all items have been returned before the grace period ends.
+        // To go from Null -> Suspended, check to see if items have not been returned and today is the past the grace period.
+        bool allReturned = AllReturned(note);
+        int longestGracePeriodInDays = -1;
+        int longestOverdueInDays = -1;
+
+        Console.WriteLine($"Analyzing note ({note.Id})");
+
+        foreach (Loan loan in note.Loans)
+        {
+            // Find Longest Grace
+            if (longestGracePeriodInDays < loan.DaysOfGrace)
+            {
+                longestGracePeriodInDays = loan.DaysOfGrace;
+            }
+
+            // Find longest Overdue.
+            TimeSpan overdue = loan.GetOverdueTimespan();
+            if (longestOverdueInDays < overdue.Days)
+            {
+                longestOverdueInDays = overdue.Days;
+            }
+        }
+
+        if (allReturned == true)
+        {
+            // Check to see if patron beat grace.
+            if (longestOverdueInDays < longestGracePeriodInDays)
+            {
+                int success = SQLInterface.SetNoteStatus(note.Id, StatusType.GRACE);
+                if (success != 0)
+                {
+                    return success;
+                }
+            }
+            else
+            {
+                int success = SQLInterface.SetNoteStatus(note.Id, StatusType.SUSPENDED);
+                if (success != 0)
+                {
+                    return success;
+                }
+            }
+        }
+
+        return 0;
+        
+        /*
         bool allReturned = AllReturned(note);
         int longestOverdue = -1;
         int longestGrace = -1;
@@ -222,7 +270,7 @@ public class NoteAnalysis
                             command.Parameters.AddWithValue("$status", "SUSPENDED");
                             command.Parameters.AddWithValue("$updated", "0"); // Value is unaligned with Alma (Needs Update).
                         }
-                        else // Items are not returned but the user is still within the grace period before being overdue.
+                    else // Items are not returned but the user is still within the grace period before being overdue.
                         {
                             command.Parameters.AddWithValue("$status", DBNull.Value);
                             command.Parameters.AddWithValue("$updated", "1");
@@ -250,6 +298,7 @@ public class NoteAnalysis
         }
 
         return 0;
+        */
     }
 
 
