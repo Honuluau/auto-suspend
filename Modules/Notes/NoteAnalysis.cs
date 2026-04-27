@@ -14,6 +14,8 @@ public class NoteAnalysis
         )
     """;
 
+    private static readonly string SET_COMMAND = "UPDATE note SET status = $status, updated = $updated WHERE id = $id";
+
 
     // Check if Note is All Returned.
     public static bool AllReturned(Note note)
@@ -62,7 +64,6 @@ public class NoteAnalysis
     {
         DateTime? mostRecentReturnDate = GetMostRecentReturnDate(note);
         int suspendableInstance = MathUtil.Clamp(note.Instance, 1, Config.Current.SuspensionLengthsPerInstance.Length);
-        Console.WriteLine($"Most recent return date is: {mostRecentReturnDate.ToString()}");
         int suspensionLengthInDays = Config.Current.SuspensionLengthsPerInstance[suspendableInstance-1]*7; // -1 because C# Arrays start at an index = 0.
 
         if (mostRecentReturnDate != null)
@@ -139,8 +140,15 @@ public class NoteAnalysis
                             // Decide which method to continue to for further analyzation.
                             switch (note.Status)
                             {
+                                case StatusType.REINSTATEMENT:
+                                    int reinstated = AnalyzeReinstatementNote(note);
+                                    if (reinstated != 0)
+                                    {
+                                        return reinstated;
+                                    }
+                                    break;
                                 case StatusType.SUSPENDED:
-                                    int suspended = AnalyzeSuspendedNote(note, connection);
+                                    int suspended = AnalyzeSuspendedNote(note);
                                     if (suspended != 0)
                                     {
                                         return suspended;
@@ -202,8 +210,7 @@ public class NoteAnalysis
             {
                 connection.Open();
 
-                string setCommand = "UPDATE note SET status = $status, updated = $updated WHERE id = $id";
-                using (SqliteCommand command = new SqliteCommand(setCommand, connection))
+                using (SqliteCommand command = new SqliteCommand(SET_COMMAND, connection))
                 {
                     command.Parameters.AddWithValue("$id", note.Id);
 
@@ -247,18 +254,23 @@ public class NoteAnalysis
 
 
     // Analyze note whose status is suspended i.e. check if patron qualifies for reinstatement.
-    public static int AnalyzeSuspendedNote(Note note, SqliteConnection connection)
+    public static int AnalyzeSuspendedNote(Note note)
     {
         try
         {
-            // To go from suspended -> reinstated, we must check if all items are returned.
-            // To go form suspended -> resolved, we must Analyze for Resolved immediately. Maybe make it so that it goes up the entire chain as it gets analyzed? Yes. Do it. Must be smart enough to check for notes and know that one did not exist prior because of skipping. This is all incase the program is not ran every day (not happening).
-        
+            // To go from suspended -> reinstated, we must check if all items are returned.        
             bool allReturned = AllReturned(note);
 
             if (allReturned == true)
             {
                 // Update SQL and then continue to AnalyzeReinstatementNote -> Resolved.
+                int success = SQLInterface.SetNoteStatus(note.Id, StatusType.REINSTATEMENT);
+                if (success != 0)
+                {
+                    return success;
+                }
+
+                AnalyzeReinstatementNote(note);
             }
         }
         catch (Exception e)
@@ -268,5 +280,30 @@ public class NoteAnalysis
         }
 
         return 0;
+    }
+
+    public static int AnalyzeReinstatementNote(Note note)
+    {
+        try
+        {
+            // To go from Reinstatement -> Resolved, all loans must have been returned after x amount of days. X = suspension length/period.
+
+            // Check if today IS the reinstatement date OR past. (Not now because it is too specific, suspensions have always been in days and not to the hour.)
+            if (DateTime.Today >= GetReinstatementDateForNote(note)!.Value.Date)
+            {
+                int success = SQLInterface.SetNoteStatus(note.Id, StatusType.RESOLVED);
+                if (success != 0)
+                {
+                    return success;
+                }
+            }
+
+            return 0;
+        }
+        catch (Exception e)
+        {
+            Logger<NoteAnalysis>.Error($"Failed to analyze a reinstatement note ({note.Id})", e);
+            return 27;
+        }
     }
 }

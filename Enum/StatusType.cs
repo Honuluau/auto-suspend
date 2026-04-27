@@ -4,6 +4,5 @@ public enum StatusType
     GRACE,
     SUSPENDED,
     REINSTATEMENT,
-    RESOLVED,
-    PERMANENT,
+    RESOLVED
 }
