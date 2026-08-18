@@ -33,6 +33,7 @@ public class AutoSuspend
         // Development Stuff -- Subject to Change
 
         // NOTE CONCATENATION TESTING
+        /*
         Note note = new Note(9, 6, ParseDates.ConvertStringToDateTime("2025-04-28"), StatusType.SUSPENDED, 0, SQLInterface.GetInstance(9));
         Logger<NoteConcatenation>.Log(NoteConcatenation.FormatNote(note), LogLevel.Debug);
 
@@ -86,6 +87,9 @@ public class AutoSuspend
             return noteAnalysis;
         }
         */
+
+        Note note = new Note(-1, -1, ParseDates.ConvertStringToDateTime("2026-07-05"), StatusType.SUSPENDED, 0, SQLInterface.GetInstance(2));
+        int updateNote = await NoteUpdater.UpdateNote(note);
         
         return 0;
     }
