@@ -53,6 +53,15 @@ public class NoteConcatenation
         string itemsList = GetItemsList(note);
         string endStatement = GetEndStatement(note);
 
-        return $"Acct. Status: {note.Status.ToString()} @ Instance # {note.Instance} >> Item{(note.Loans.Count() > 1 ? "s": "")} Overdue: {itemsList} >> {endStatement} AS OF ({ParseDates.AmericanFormat(DateTime.Now)}) --AUTO-SUSPEND ({note.Id})";
+        string formatted_note = $"Acct. Status: {note.Status.ToString()} @ Instance #{note.Instance} >> Item{(note.Loans.Count() > 1 ? "s": "")} Overdue: {itemsList} >> {endStatement} AS OF ({ParseDates.AmericanFormat(DateTime.Now)}) --AUTO-SUSPEND ({note.Id})";
+
+        // If message length is about 1999 character limit, the note will be formatted to "X Items".
+        if (formatted_note.Length >= 1999)
+        {
+            formatted_note = $"Acct. Status: {note.Status.ToString()} @ Instance #{note.Instance} >> Items Overdue: ({note.Loans.Count().ToString()}) >> {endStatement} AS OF {ParseDates.AmericanFormat(DateTime.Now)}) --AUTO-SUSPEND ({note.Id})";
+            //Acct. Status: RESOLVED @ Instance #3 >> Item(s) Status: Lost Laptop, Charger, & Bag >> RETURNED 4/27/26-REINSTATEMENT ON 7/22/26-LB
+        }
+        
+        return formatted_note; 
     }
 }

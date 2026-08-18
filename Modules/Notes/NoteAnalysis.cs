@@ -4,14 +4,11 @@ using Microsoft.Data.Sqlite;
 
 public class NoteAnalysis
 {
+    // Grab notes that are not already RESOLVED and were given GRACE (items that were overdue but were returned before Grace period)
     private static readonly string GET_NOTES_SQL_COMMAND = $"""
         SELECT *
         FROM note
-        WHERE note.status IS NULL OR note.status <> 'RESOLVED' AND note.status <> 'GRACE' AND NOT EXISTS (
-            SELECT 1
-            FROM perm_suspend
-            WHERE perm_suspend.patron_id = note.patron_id
-        )
+        WHERE note.status IS NULL OR note.status <> 'RESOLVED' AND note.status <> 'GRACE'
     """;
 
     private static readonly string SET_COMMAND = "UPDATE note SET status = $status, updated = $updated WHERE id = $id";

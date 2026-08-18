@@ -55,13 +55,12 @@ public class AutoSuspend
         }
         */
 
-        /*
+        // Pull data from Alma.
         int overdueAnalyticsAPI = await OverdueAnalytics.GatherOverdueAnalytics();
         if (overdueAnalyticsAPI != 0)
         {
             return overdueAnalyticsAPI;
         }
-
 
         int consolidateLoans = SQLInterface.ConsolidateLoans();
         if (consolidateLoans != 0)
@@ -74,15 +73,16 @@ public class AutoSuspend
         {
             return returnSystem;
         }
-        */
 
 
         // TESTING WITH NOTE ID = 6, 9, 205
+        /*
         int noteAnalysis = NoteAnalysis.AnalyzeNotes();
         if (noteAnalysis != 0)
         {
             return noteAnalysis;
         }
+        */
         
         return 0;
     }

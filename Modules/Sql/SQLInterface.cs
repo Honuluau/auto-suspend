@@ -116,6 +116,10 @@ public class SQLInterface
         return 0;
     }
 
+    /*
+    This method pairs loans to their notes in SQL.
+    If a loan's note does not exist, it will create a note for the loan.
+    */
     public static int ConsolidateLoans()
     {
         Logger<SQLInterface>.Log($"Consolidating loans into notes: {CONNECTION_STRING}", LogLevel.Info);
@@ -140,14 +144,14 @@ public class SQLInterface
                 reader.Close();
 
                 // Consolidation
-                foreach (DataRow row in dataTable.Rows)
+                foreach (DataRow row in dataTable.Rows) // For each loan that does not have a note connected to it,
                 {
                     int loanId = Convert.ToInt32(row[0]);
                     DateTime loanDate = ParseDates.ConvertStringToDateTime(row[1].ToString()!);
                     int patronId = Convert.ToInt32(row[2]);
                     int noteId = -1;
 
-                    // Ensure note exists in SQL.
+                    // Find the matching note id from patron_id and loandate and create the note if it does not already exist.
                     string query = "SELECT id FROM note WHERE patron_id = $patronId AND date = $loanDate";
                     using (SqliteCommand queryCommand = new SqliteCommand(query, connection))
                     {
@@ -444,7 +448,7 @@ public class SQLInterface
         try
         {
             int id = GetIdFromTable(tableName, columns[checkIndex], variables[checkIndex]);
-            if (id == 0)
+            if (id == 0) // 0 means that there is no id found meaming the data has not been already created.
             {
                 using (SqliteConnection connection = new SqliteConnection(CONNECTION_STRING))
                 {

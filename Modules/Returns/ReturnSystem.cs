@@ -29,7 +29,10 @@ public class ReturnSystem
             return 24;
         }
 
+        // Loans that have been returned in Alma but do not have a date marked.
         List<Loan> missingLoans = GetMissingLoansFromOverdue(sqlOverdueLoans);
+
+        // Somehow get access to the RETURN_DATE of a loan. I know that I knew of a method 3 months ago, I'll have to figure it out again.
 
         return 0;
     }   
