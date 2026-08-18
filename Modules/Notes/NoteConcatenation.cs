@@ -59,7 +59,6 @@ public class NoteConcatenation
         if (formatted_note.Length >= 1999)
         {
             formatted_note = $"Acct. Status: {note.Status.ToString()} @ Instance #{note.Instance} >> Items Overdue: ({note.Loans.Count().ToString()}) >> {endStatement} AS OF {ParseDates.AmericanFormat(DateTime.Now)}) --AUTO-SUSPEND ({note.Id})";
-            //Acct. Status: RESOLVED @ Instance #3 >> Item(s) Status: Lost Laptop, Charger, & Bag >> RETURNED 4/27/26-REINSTATEMENT ON 7/22/26-LB
         }
         
         return formatted_note; 

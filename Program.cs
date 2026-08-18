@@ -33,9 +33,11 @@ public class AutoSuspend
         // Development Stuff -- Subject to Change
 
         // NOTE CONCATENATION TESTING
-        /*
         Note note = new Note(9, 6, ParseDates.ConvertStringToDateTime("2025-04-28"), StatusType.SUSPENDED, 0, SQLInterface.GetInstance(9));
         Logger<NoteConcatenation>.Log(NoteConcatenation.FormatNote(note), LogLevel.Debug);
+
+        Note long_note = new Note(2, 2, ParseDates.ConvertStringToDateTime("2026-07-05"), StatusType.SUSPENDED, 0, SQLInterface.GetInstance(2));
+        Logger<NoteConcatenation>.Log(NoteConcatenation.FormatNote(long_note), LogLevel.Debug);
 
         /*
         THIS IS FOR THE RETURN SYSETM.
@@ -56,6 +58,7 @@ public class AutoSuspend
         */
 
         // Pull data from Alma.
+        /*
         int overdueAnalyticsAPI = await OverdueAnalytics.GatherOverdueAnalytics();
         if (overdueAnalyticsAPI != 0)
         {
@@ -73,7 +76,7 @@ public class AutoSuspend
         {
             return returnSystem;
         }
-
+        */        
 
         // TESTING WITH NOTE ID = 6, 9, 205
         /*
