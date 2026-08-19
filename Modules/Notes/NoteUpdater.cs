@@ -13,8 +13,14 @@ public class NoteUpdater
     */
     public static async Task<int> UpdateNote(Note note)
     {
-        // Get current user details.
-        int userPrimaryIdentifier = 901458044;
+        // Get the current UserPrimaryIdentifier for GET request.
+        string? userPrimaryIdentifier = SQLInterface.GetUserPrimaryIdentifier(note.PatronId);
+        if (userPrimaryIdentifier == null)
+        {
+            return 28;
+        }
+
+
         HttpClient httpClient = HttpClientHouse.GetHttpClient();
         string url = $"{SensitiveInfo.GetUserDetailsUrl}{userPrimaryIdentifier.ToString()}?apikey={SensitiveInfo.DevelopmentServerAPIKey}&format=json";
         Logger<NoteUpdater>.Log(url, LogLevel.Debug);

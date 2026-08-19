@@ -412,6 +412,43 @@ public class SQLInterface
         }
     }
 
+    /*
+    This method gets the UserPrimaryIdentifier from a patronId.
+    Check for NULL value for failure.
+    */
+    public static string? GetUserPrimaryIdentifier(int patronId)
+    {
+        try
+        {
+            using (SqliteConnection connection = new SqliteConnection(CONNECTION_STRING))
+            {
+                connection.Open();
+
+                using (SqliteCommand command = new SqliteCommand("SELECT user_primary_identifier FROM patron WHERE id = $patron_id", connection))
+                {
+                    command.Parameters.AddWithValue("$patron_id", patronId);
+                    SqliteDataReader reader = command.ExecuteReader();
+                    DataTable table = new DataTable();
+                    table.Load(reader);
+
+                    connection.Close();
+
+                    if (table.Rows.Count > 0)
+                    {
+                        return table.Rows[0][0].ToString();
+                    }
+                    
+                    return null;
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Logger<SQLInterface>.Error($"Failed to get UserPrimaryIdentifier for {patronId.ToString()}.", e);
+            return null;
+        }
+    }
+
     // [a, b] = (a, b)
     public static string ConvertStringListIntoSQLTuple(string[] stringList)
     {
