@@ -36,10 +36,8 @@ public class NoteConcatenation
 
         if (NoteAnalysis.AllReturned(note))
         {
-            int suspendableInstance = MathUtil.Clamp(note.Instance, 1, Config.Current.SuspensionLengthsPerInstance.Length);
-            int suspensionLengthInDays = Config.Current.SuspensionLengthsPerInstance[suspendableInstance - 1] * 7;
-
-            statement.Append($"REINSTATEMENT ON ({ParseDates.AmericanFormat(DateTime.Now.AddDays(suspensionLengthInDays))})");
+            DateTime reinstatementDate = NoteAnalysis.GetReinstatementDateForNote(note)!.Value; // Cannot be Null at this point.
+            statement.Append($"REINSTATEMENT ON ({ParseDates.AmericanFormat(reinstatementDate)})");
         }
         else
         {
