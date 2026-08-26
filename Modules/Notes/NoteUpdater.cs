@@ -33,6 +33,16 @@ public class NoteUpdater
     }
 
     /// <summary>
+    /// Quick method that is shared across methods to check if note is visible.
+    /// </summary>
+    /// <param name="note">Note object.</param>
+    /// <returns>If the note is viewable by a patron based on it's status.</returns>
+    public static bool IsNoteViewable(Note note)
+    {
+        return !(note.Status == StatusType.RESOLVED);
+    }
+
+    /// <summary>
     /// This method updates a note by pulling User Details, modifying only the note, and then sending a PUT request.
     /// </summary>
     /// <remarks>
@@ -104,11 +114,7 @@ public class NoteUpdater
             Logger<NoteUpdater>.Log($"No previous note was found for note whose id={note.Id.ToString()}. Adding note.", LogLevel.Info);
 
             // Hide note if note is RESOLVED.
-            bool viewable = true;
-            if (note.Status == StatusType.RESOLVED)
-            {
-                viewable = false;
-            }
+            bool viewable = IsNoteViewable(note);
 
             // Adding note.
             JsonObject addedJson = new JsonObject
@@ -131,7 +137,21 @@ public class NoteUpdater
         }
         else // Edit note if targetNode was found.
         {
+            // Hide note if note is RESOLVED.
+            bool viewable = IsNoteViewable(note);
             
+            // Save old text to check if it updated.
+            String oldNoteText = targetNode["note_text"]!.ToString();
+
+            targetNode["note_text"] = NoteConcatenation.FormatNote(note);
+            targetNode["user_viewable"] = viewable;
+            targetNode["popup_note"] = viewable;
+
+            // Only if the note has changed, send the note change signal.
+            if (oldNoteText != targetNode["note_text"]!.ToString())
+            {
+                noteChanged = true;
+            }
         }
 
         /*
@@ -148,6 +168,10 @@ public class NoteUpdater
             if (!putResponse.IsSuccessStatusCode)
             {
                 return 32;
+            }
+            else
+            {
+                Logger<NoteUpdater>.Log($"Successfully updated note id({note.Id.ToString()}) for user({userPrimaryIdentifier})", LogLevel.Info);
             }
             putResponse.EnsureSuccessStatusCode();
         }

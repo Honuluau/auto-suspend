@@ -2,6 +2,7 @@
 This file holds two programs that dictate JSON Objects for user_note in GET UserDetails.
 */
 
+using System.Dynamic;
 using System.Text.Json.Serialization;
 
 public class UserNote
@@ -19,7 +20,7 @@ public class UserNote
     public required bool PopupNote { get; set; }
 
     [JsonPropertyName("created_by")]
-    public required string CreatedBy = "Auto-Suspend"; // Default
+    public required string CreatedBy { get; set; }
 
     [JsonPropertyName("created_date")]
     public required DateTime CreatedDate { get; set; }
