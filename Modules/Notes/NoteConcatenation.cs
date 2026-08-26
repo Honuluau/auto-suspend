@@ -1,18 +1,15 @@
 using System.Text;
 
-public class NoteConcatenation
-{
+public class NoteConcatenation {
     /// <summary>
     /// Formats the items specified by the loans of a note.
     /// </summary>
     /// <param name="note"></param>
     /// <returns>A string that looks like this: [(Item1,02000),(Item2,03000)]</returns>
-    private static string GetItemsList(Note note)
-    {
+    static string GetItemsList(Note note) {
         StringBuilder list = new System.Text.StringBuilder("[");
 
-        foreach (Loan loan in note.Loans)
-        {
+        foreach (Loan loan in note.Loans) {
             list.Append($"({loan.Item.Title},{loan.Item.Barcode}),");
         }
 
@@ -28,19 +25,19 @@ public class NoteConcatenation
     /// Formats the end of a string for a note. The result is determined on if the items are returned or not.
     /// This essentially either marks a note as UNRESOLVED or gives a REINSTATEMENT DATE.
     /// </summary>
+    /// <remarks>
+    /// NoteAnalysis.GetReinstatementDate is asserted because to format a note, it must not be null.
+    /// </remarks>
     /// <param name="note"></param>
     /// <returns>A string that is either UNRESOLVED, or a REINSTATEMENT date.</returns>
-    private static string GetEndStatement(Note note)
-    {
+    static string GetEndStatement(Note note) {
         StringBuilder statement = new System.Text.StringBuilder("");
 
-        if (NoteAnalysis.AllReturned(note))
-        {
-            DateTime reinstatementDate = NoteAnalysis.GetReinstatementDateForNote(note)!.Value; // Cannot be Null at this point.
+        if (NoteAnalysis.AllReturned(note)) {
+            DateTime reinstatementDate = NoteAnalysis.GetReinstatementDateForNote(note)!.Value;
             statement.Append($"REINSTATEMENT ON ({ParseDates.AmericanFormat(reinstatementDate)})");
         }
-        else
-        {
+        else {
             statement.Append($"UNRESOLVED");
         }
 
@@ -48,36 +45,94 @@ public class NoteConcatenation
     }
 
     /// <summary>
+    /// Quick record type for readibilty when passing information to concatenate the information of a note.
+    /// </summary>
+    record ConcatenateDetail {
+        public string EndStatement { get; set; } = "";
+        public int Instance { get; set; } = -1;
+        public string ItemsList { get; set; } = "";
+        public int LoansCount { get; set; } = -1;
+        public int NoteId { get; set; } = -1;
+        public string PluralItemsMarker { get; set; } = ""; // String for empty char.
+        public string Status { get; set; } = "";
+        public string TodaysDate { get; set; } = "";
+    }
+
+    /// <summary>
+    /// Short form replaces the items list with the amount of loans.
+    /// </summary>
+    /// <param name="detail">Required information about the note.</param>
+    /// <returns>A shortened suspension note.</returns>
+    static string ConcatenateNoteShort(ConcatenateDetail detail) {
+        StringBuilder builder = new StringBuilder("Acct. Status: ");
+
+        builder.Append(detail.Status);
+        builder.Append(" @ Instance #");
+        builder.Append(detail.Instance);
+        builder.Append(" >> Items Overdue: (");
+        builder.Append(detail.LoansCount);
+        builder.Append(") >> ");
+        builder.Append(detail.EndStatement);
+        builder.Append(" AS OF (");
+        builder.Append(detail.TodaysDate);
+        builder.Append(") --AUTO-SUSPEND (");
+        builder.Append(detail.NoteId);
+        builder.Append(")");
+
+        return builder.ToString();
+    }
+
+    /// <summary>
+    /// Lengthy builder for easy readability. Concatenates a note into a suspension note.
+    /// </summary>
+    /// <param name="detail">Required information about the note.</param>
+    /// <returns>A suspension note.</returns>
+    static string ConcatenateNote(ConcatenateDetail detail) {
+        StringBuilder builder = new StringBuilder("Acct. Status: ");
+
+        builder.Append(detail.Status);
+        builder.Append(" @ Instance #");
+        builder.Append(detail.Instance);
+        builder.Append(" >> Item");
+        builder.Append(detail.PluralItemsMarker);
+        builder.Append(" Overdue: ");
+        builder.Append(detail.ItemsList);
+        builder.Append(" >> ");
+        builder.Append(detail.EndStatement);
+        builder.Append(" AS OF (");
+        builder.Append(detail.TodaysDate);
+        builder.Append(") --AUTO-SUSPEND (");
+        builder.Append(detail.NoteId);
+        builder.Append(")");
+
+        // Check if longer than Auto-Suspend note character limit.
+        if (builder.Length >= 256) {
+            return ConcatenateNoteShort(detail);
+        }
+
+        return builder.ToString();
+    }
+
+    /// <summary>
     /// This method formats a given note into a suspension note that is visible in Alma.
     /// </summary>
     /// <param name="note"></param>
     /// <returns>A suspension note.</returns>
-    public static string FormatNote(Note note)
-    {
-        // Assign values to variables that require logic to form the string.
-        string endStatement = GetEndStatement(note);
-        string itemsList = GetItemsList(note);
-        string pluralItems = note.Loans.Count() > 1 ? "s" : "";
-        string status = "SUSPENDED";
-        string todaysDate = ParseDates.AmericanFormat(DateTime.UtcNow);
-        if (note.Status.ToString() == "RESOLVED")
-        {
-            status = "RESOLVED";
+    public static string FormatNote(Note note) {
+        ConcatenateDetail detail = new ConcatenateDetail();
+        detail.EndStatement = GetEndStatement(note);
+        detail.Instance = note.Instance;
+        detail.ItemsList = GetItemsList(note);
+        detail.LoansCount = note.Loans.Count();
+        detail.NoteId = note.Id;
+        detail.PluralItemsMarker = note.Loans.Count() > 1 ? "s" : "";
+        detail.Status = "SUSPENDED"; // Always suspended unless RESOLVED.
+        detail.TodaysDate = ParseDates.AmericanFormat(DateTime.UtcNow);
+
+        if (note.Status.ToString() == "RESOLVED") {
+            detail.Status = "SUSPENDED";
         }
 
-
-        /*
-        Through testing, I was able to discern that Alma notes have a 1,999 character limit. Anything past that gets cut off.
-        If the note gets cut off prematurely, the ID required for Auto-Suspend to find to update the note is not present which will cause the program to shut down.
-        To circumvent this, I set a maximum suspension length to 256 characters. Anything more than 256 characters is a ridiculously long note.
-        If necessary, an end-user can just click the "Okay" button and view all their overdues anyway.
-        */
-        string formatted_note = $"Acct. Status: {status} @ Instance #{note.Instance} >> Item{pluralItems} Overdue: {itemsList} >> {endStatement} AS OF ({todaysDate}) --AUTO-SUSPEND ({note.Id})";
-        if (formatted_note.Length >= 256)
-        {
-            formatted_note = $"Acct. Status: {status} @ Instance #{note.Instance} >> Items Overdue: ({note.Loans.Count().ToString()}) >> {endStatement} AS OF {todaysDate}) --AUTO-SUSPEND ({note.Id})";
-        }
-
-        return formatted_note;
+        return ConcatenateNote(detail);
     }
 }
