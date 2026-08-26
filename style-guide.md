@@ -60,7 +60,7 @@ Developed from Google Java style.
 *   A maximum of one statement per line.
 *   A maximum of one assignment per statement.
 *   Indentation via tabs.
-*   Column limit: 100.
+*   Column limit: 110.
 *   No line break before opening brace.
 *   No line break between closing brace and `else`.
 *   Braces used even when optional.
