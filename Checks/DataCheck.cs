@@ -37,7 +37,7 @@ public class DataCheck
             {
                 return database;
             }
-        } 
+        }
 
         return 0;
     }

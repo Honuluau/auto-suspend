@@ -35,5 +35,5 @@ public class ReturnSystem
         // Somehow get access to the RETURN_DATE of a loan. I know that I knew of a method 3 months ago, I'll have to figure it out again.
 
         return 0;
-    }   
+    }
 }

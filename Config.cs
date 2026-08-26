@@ -16,7 +16,7 @@ public class Config
     {
         try
         {
-            Current = JsonSerializer.Deserialize<ConfigJSON>(File.ReadAllText(path))!;   
+            Current = JsonSerializer.Deserialize<ConfigJSON>(File.ReadAllText(path))!;
         }
         catch (Exception e)
         {

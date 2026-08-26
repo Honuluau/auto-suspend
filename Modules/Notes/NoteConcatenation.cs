@@ -37,7 +37,7 @@ public class NoteConcatenation
         if (NoteAnalysis.AllReturned(note))
         {
             int suspendableInstance = MathUtil.Clamp(note.Instance, 1, Config.Current.SuspensionLengthsPerInstance.Length);
-            int suspensionLengthInDays = Config.Current.SuspensionLengthsPerInstance[suspendableInstance-1]*7;
+            int suspensionLengthInDays = Config.Current.SuspensionLengthsPerInstance[suspendableInstance - 1] * 7;
 
             statement.Append($"REINSTATEMENT ON ({ParseDates.AmericanFormat(DateTime.Now.AddDays(suspensionLengthInDays))})");
         }
@@ -55,11 +55,11 @@ public class NoteConcatenation
     /// <param name="note"></param>
     /// <returns>A suspension note.</returns>
     public static string FormatNote(Note note)
-    {   
+    {
         // Assign values to variables that require logic to form the string.
         string endStatement = GetEndStatement(note);
         string itemsList = GetItemsList(note);
-        string pluralItems = note.Loans.Count() > 1 ? "s": "";
+        string pluralItems = note.Loans.Count() > 1 ? "s" : "";
         string status = "SUSPENDED";
         string todaysDate = ParseDates.AmericanFormat(DateTime.UtcNow);
         if (note.Status.ToString() == "RESOLVED")
@@ -79,7 +79,7 @@ public class NoteConcatenation
         {
             formatted_note = $"Acct. Status: {status} @ Instance #{note.Instance} >> Items Overdue: ({note.Loans.Count().ToString()}) >> {endStatement} AS OF {todaysDate}) --AUTO-SUSPEND ({note.Id})";
         }
-        
-        return formatted_note; 
+
+        return formatted_note;
     }
 }

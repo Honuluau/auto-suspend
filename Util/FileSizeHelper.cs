@@ -1,10 +1,10 @@
 public class FileSizeHelper
 {
-    private static readonly string[] Units = {"B", "KB", "MB", "GB", "TB", "PB"};
+    private static readonly string[] Units = { "B", "KB", "MB", "GB", "TB", "PB" };
     public static string GetReadableFileSize(long size)
     {
         int unitIndex = 0;
-        double readableSize = (double) size;
+        double readableSize = (double)size;
 
         while (readableSize >= 1024 && unitIndex < Units.Length - 1)
         {

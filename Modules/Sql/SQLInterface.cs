@@ -437,7 +437,7 @@ public class SQLInterface
                     {
                         return table.Rows[0][0].ToString();
                     }
-                    
+
                     return null;
                 }
             }
@@ -524,7 +524,7 @@ public class SQLInterface
     {
         try
         {
-            using(SqliteConnection connection = new SqliteConnection(CONNECTION_STRING))
+            using (SqliteConnection connection = new SqliteConnection(CONNECTION_STRING))
             {
                 connection.Open();
 

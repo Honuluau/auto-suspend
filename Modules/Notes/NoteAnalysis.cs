@@ -61,7 +61,7 @@ public class NoteAnalysis
     {
         DateTime? mostRecentReturnDate = GetMostRecentReturnDate(note);
         int suspendableInstance = MathUtil.Clamp(note.Instance, 1, Config.Current.SuspensionLengthsPerInstance.Length);
-        int suspensionLengthInDays = Config.Current.SuspensionLengthsPerInstance[suspendableInstance-1]*7; // -1 because C# Arrays start at an index = 0.
+        int suspensionLengthInDays = Config.Current.SuspensionLengthsPerInstance[suspendableInstance - 1] * 7; // -1 because C# Arrays start at an index = 0.
 
         if (mostRecentReturnDate != null)
         {
@@ -149,7 +149,7 @@ public class NoteAnalysis
                                     if (suspended != 0)
                                     {
                                         return suspended;
-                                    } 
+                                    }
                                     break;
                                 default:
                                     int error = AnalyzeNullNote(note, connection);
@@ -226,7 +226,7 @@ public class NoteAnalysis
         }
 
         return 0;
-        
+
         /*
         bool allReturned = AllReturned(note);
         int longestOverdue = -1;

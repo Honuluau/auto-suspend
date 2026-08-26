@@ -6,7 +6,7 @@ public class AlmaLoan
 {
     // User
     public string UserPrimaryIdentifier { get; set; }
-    
+
     // Item
     public string Barcode { get; set; }
     public string ItemPolicy { get; set; }

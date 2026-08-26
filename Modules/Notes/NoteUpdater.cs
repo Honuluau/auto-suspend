@@ -139,7 +139,7 @@ public class NoteUpdater
         {
             // Hide note if note is RESOLVED.
             bool viewable = IsNoteViewable(note);
-            
+
             // Save old text to check if it updated.
             String oldNoteText = targetNode["note_text"]!.ToString();
 

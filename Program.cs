@@ -77,7 +77,7 @@ public class AutoSuspend
         {
             return returnSystem;
         }
-        */        
+        */
 
         // TESTING WITH NOTE ID = 6, 9, 205
         /*
@@ -102,7 +102,7 @@ public class AutoSuspend
         {
             return updateNote;
         }
-        
+
         return 0;
     }
 
@@ -120,7 +120,8 @@ public class AutoSuspend
         if (successfulRoutine != 0)
         {
             Logger<AutoSuspend>.Log($"Auto-Suspend ended with error code: {successfulRoutine}", LogLevel.Error);
-        } else
+        }
+        else
         {
             Logger<AutoSuspend>.Log($"Auto-Suspend ended without errors.", LogLevel.Info);
             return 0;
