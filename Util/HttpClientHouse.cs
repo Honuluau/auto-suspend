@@ -12,7 +12,7 @@ public class HttpClientHouse {
     /// <summary>
     /// This method is only called once by Auto-Suspend and it updates the HttpClient.
     /// </summary>
-    /// <param name="newHttpClient"></param>
+    /// <param name="newHttpClient">New HttpClient</param>
     public static void SetHttpClient(HttpClient newHttpClient) {
         httpClient = newHttpClient;
     }
