@@ -32,7 +32,7 @@ public class NoteConcatenation {
         detail.TodaysDate = ParseDates.AmericanFormat(DateTime.UtcNow);
 
         if (note.Status.ToString() == "RESOLVED") {
-            detail.Status = "SUSPENDED";
+            detail.Status = "RESOLVED";
         }
 
         return ConcatenateNote(detail);
