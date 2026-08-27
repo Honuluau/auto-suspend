@@ -93,7 +93,6 @@ public class NoteConcatenation {
         return builder.ToString();
     }
 
-    // Formats the end of the string based on if the items are returned or not.
     /// <summary>
     /// Formats the end of a string for a note. The result is determined on if the items are returned or not.
     /// This essentially either marks a note as UNRESOLVED or gives a REINSTATEMENT DATE.
