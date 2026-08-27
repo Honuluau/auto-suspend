@@ -36,7 +36,7 @@ public static class Logger<T> {
     /// <param name="message">Log message.</param>
     /// <param name="level">Level of the log.</param>
     public static void Log(string message, LogLevel level) {
-        string log = $"[{DateTime.Now}]\t[{level}]\t[{typeof(T).Name}]\t{message}";
+        string log = $"[{DateTime.UtcNow}]\t[{level}]\t[{typeof(T).Name}]\t{message}";
         File.AppendAllText(LOG_PATH, log + Environment.NewLine);
         Console.WriteLine(log);
     }
