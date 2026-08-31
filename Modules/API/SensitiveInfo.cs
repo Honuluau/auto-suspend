@@ -1,26 +1,20 @@
 using System.Text.Json;
 
-public class SensitiveInfoJson
-{
-    public required string Analytics { get; set; }
-    public required string DevelopmentServer { get; set; }
-    public required string OverdueReportUrl { get; set; }
-    public required string GetUserDetailsUrl { get; set; }
-    public required string CustomOverdueReportUrl { get; set; }
-}
-
-public class SensitiveInfo
-{
+public class SensitiveInfo {
     public static string AnalyticsAPIKey = "";
     public static string DevelopmentServerAPIKey = "";
     public static string OverdueReportUrl = "";
     public static string GetUserDetailsUrl = "";
     public static string CustomOverdueReportUrl = "";
 
-    public static int Init()
-    {
-        try
-        {
+    /// <summary>
+    /// This method reads all of the sensitive information from a pre-determined json file's path and sets
+    /// it to this class's static values for other classes to reference. This is to avoid publishing API keys
+    /// to Git.
+    /// </summary>
+    /// <returns>Integer Overflow</returns>
+    public static int Init() {
+        try {
             string jsonString = File.ReadAllText("/Users/dyl/autosuspend-sensitiveinfo.json");
             SensitiveInfoJson json = JsonSerializer.Deserialize<SensitiveInfoJson>(jsonString)!;
 
@@ -30,8 +24,7 @@ public class SensitiveInfo
             GetUserDetailsUrl = json.GetUserDetailsUrl;
             CustomOverdueReportUrl = json.CustomOverdueReportUrl;
         }
-        catch (Exception e)
-        {
+        catch (Exception e) {
             Logger<SensitiveInfo>.Error("An error occured while initializing API keys", e);
             return 12;
         }
@@ -39,4 +32,12 @@ public class SensitiveInfo
         Logger<SensitiveInfo>.Log("Successfully initialized Sensitive Info.", LogLevel.Info);
         return 0;
     }
+}
+
+public class SensitiveInfoJson {
+    public required string Analytics { get; set; }
+    public required string DevelopmentServer { get; set; }
+    public required string OverdueReportUrl { get; set; }
+    public required string GetUserDetailsUrl { get; set; }
+    public required string CustomOverdueReportUrl { get; set; }
 }
