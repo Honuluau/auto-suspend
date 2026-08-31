@@ -18,7 +18,8 @@ public class NoteUpdater {
     public static string GetIdFromWrittenNote(String writtenNote) {
         MatchCollection matches = Regex.Matches(writtenNote, @"\((.*?)\)");
         if (matches.Count > 0) {
-            // Get last number in parenthesis (#). Sometimes notes will be shortened which include a list of items also in parenthesis.
+            // Get last number in parenthesis (#). 
+            // Sometimes notes will be shortened which include a list of items also in parenthesis.
             return matches[matches.Count - 1].Groups[1].Value;
         }
 
@@ -35,7 +36,8 @@ public class NoteUpdater {
     }
 
     /// <summary>
-    /// This method updates a note by pulling User Details, modifying only the note, and then sending a PUT request.
+    /// This method updates a note by pulling User Details, modifying only the note, 
+    /// and then sending a PUT request.
     /// </summary>
     /// <remarks>
     /// Still working on this.
@@ -51,7 +53,8 @@ public class NoteUpdater {
 
         // Get jsonData from Alma.
         HttpClient httpClient = HttpClientHouse.GetHttpClient();
-        string url = $"{SensitiveInfo.GetUserDetailsUrl}{userPrimaryIdentifier}?apikey={SensitiveInfo.DevelopmentServerAPIKey}&format=json";
+        string url = $"{SensitiveInfo.GetUserDetailsUrl}{userPrimaryIdentifier}"
+            + "?apikey={SensitiveInfo.DevelopmentServerAPIKey}&format=json";
         string jsonStringData = await httpClient.GetStringAsync(url);
         if (jsonStringData == null) {
             return 29;
@@ -74,7 +77,8 @@ public class NoteUpdater {
 
             // Check to see if it's a manual suspension. Logged for migrating notes.
             if (note_text.Contains("instance") && !note_text.Contains("auto-suspend")) {
-                Logger<NoteUpdater>.Log($"A note was flagged as a possible old suspension not created from Auto-Suspend. UserPrimaryIdentifier: {userPrimaryIdentifier}", LogLevel.Info);
+                Logger<NoteUpdater>.Log($"A note was flagged as a possible old suspension not created"
+                    + " from Auto-Suspend. UserPrimaryIdentifier: {userPrimaryIdentifier}", LogLevel.Info);
                 continue;
             }
 
@@ -90,11 +94,13 @@ public class NoteUpdater {
         bool noteChanged = false; // Important value that determines whether or not to send a put request.
 
         /*
-        For there to be a targetNode, the array for userNotes must be valid so it is safe to assume userNotes is not null in this logic.
+        For there to be a targetNode, the array for userNotes must be valid so
+        it is safe to assume userNotes is not null in this logic.
         */
         // Add note if no targetNode was found
         if (targetNode == null) {
-            Logger<NoteUpdater>.Log($"No previous note was found for note whose id={note.Id.ToString()}. Adding note.", LogLevel.Info);
+            Logger<NoteUpdater>.Log($"No previous note was found for note whose id={note.Id.ToString()}."
+                + " Adding note.", LogLevel.Info);
 
             // Hide note if note is RESOLVED.
             bool viewable = IsNoteViewable(note);
@@ -109,7 +115,8 @@ public class NoteUpdater {
                 ["user_viewable"] = viewable,
                 ["popup_note"] = viewable,
                 ["created_by"] = "AUTO-SUSPEND",
-                ["created_date"] = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"), // Absolutely sure it is the correct format instead of plain UtcNow
+                // Absolutely sure it is the correct format instead of plain UtcNow
+                ["created_date"] = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
                 ["segment_type"] = "Internal"
             };
 
@@ -139,16 +146,19 @@ public class NoteUpdater {
         */
         if (noteChanged) {
             // Format UserDetails
-            var jsonStringNotes = new StringContent(userDetails.ToJsonString(), System.Text.Encoding.UTF8, "application/json");
+            var jsonStringNotes = new StringContent(userDetails.ToJsonString(), System.Text.Encoding.UTF8, 
+                "application/json");
 
-            string putURL = $"{SensitiveInfo.GetUserDetailsUrl}{userPrimaryIdentifier}?apikey={SensitiveInfo.DevelopmentServerAPIKey}&format=json";
+            string putURL = $"{SensitiveInfo.GetUserDetailsUrl}{userPrimaryIdentifier}"
+                + "?apikey={SensitiveInfo.DevelopmentServerAPIKey}&format=json";
             var putResponse = await httpClient.PutAsync(putURL, jsonStringNotes);
 
             if (!putResponse.IsSuccessStatusCode) {
                 return 32;
             }
             else {
-                Logger<NoteUpdater>.Log($"Successfully updated note id({note.Id.ToString()}) for user({userPrimaryIdentifier})", LogLevel.Info);
+                Logger<NoteUpdater>.Log($"Successfully updated note id({note.Id.ToString()})"
+                    +" for user({userPrimaryIdentifier})", LogLevel.Info);
             }
             putResponse.EnsureSuccessStatusCode();
         }

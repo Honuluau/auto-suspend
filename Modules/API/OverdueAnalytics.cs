@@ -61,7 +61,8 @@ public class OverdueAnalytics
         HttpClient httpClient = HttpClientHouse.GetHttpClient();
         string? resumptionToken = null;
 
-        Logger<OverdueAnalytics>.Log($"Reading overdue analytics through API and writing to database.", LogLevel.Info);
+        Logger<OverdueAnalytics>.Log($"Reading overdue analytics through API" + 
+            " and writing to database.", LogLevel.Info);
         Stopwatch.Start();
 
         // Get pages of overdues by iterating with the resumption token.
@@ -91,7 +92,8 @@ public class OverdueAnalytics
             }
         }
 
-        Logger<OverdueAnalytics>.Log($"Successfully gathered ({Overdues.Count}) overdue analytics in {Stopwatch.Stop()}.", LogLevel.Info);
+        Logger<OverdueAnalytics>.Log($"Successfully gathered ({Overdues.Count}) overdue analytics" + 
+            " in {Stopwatch.Stop()}.", LogLevel.Info);
         return 0;
     }
 
@@ -158,7 +160,9 @@ public class OverdueAnalytics
                 string dueDate = row.Element(ROWSET + "Column13")!.Value;
                 string loanDate = row.Element(ROWSET + "Column14")!.Value;
 
-                Overdue overdue = new Overdue(firstName, lastName, userGroup, userPrimaryIdentifier, barcode, title, circDesk, itemLoadId, itemPolicy, libraryName, preferredEmail, loanDate, dueDate);
+                Overdue overdue = new Overdue(firstName, lastName, userGroup, userPrimaryIdentifier, 
+                    barcode, title, circDesk, itemLoadId, itemPolicy, libraryName, preferredEmail, 
+                    loanDate, dueDate);
                 Overdues.Add(overdue);
             }
         }
@@ -182,23 +186,30 @@ public class OverdueAnalytics
         try
         {
             // Insert Patron
-            SQLInterface.InsertData("patron", ["user_primary_identifier", "first_name", "last_name", "user_group"], [overdue.UserPrimaryIdentifier, overdue.FirstName, overdue.LastName, overdue.UserGroup], 0);
+            SQLInterface.InsertData("patron", ["user_primary_identifier", "first_name", "last_name", 
+                "user_group"], [overdue.UserPrimaryIdentifier, overdue.FirstName, overdue.LastName, 
+                overdue.UserGroup], 0);
 
             // Insert Item
             SQLInterface.InsertData("item", ["barcode", "title"], [overdue.Barcode, overdue.Title], 0);
 
             // Insert Loan
-            int patronId = SQLInterface.GetIdFromTable("patron", "user_primary_identifier", overdue.UserPrimaryIdentifier);
+            int patronId = SQLInterface.GetIdFromTable("patron", "user_primary_identifier", 
+                overdue.UserPrimaryIdentifier);
             int itemId = SQLInterface.GetIdFromTable("item", "barcode", overdue.Barcode);
 
             if (patronId > 0 && itemId > 0)
             {
-                SQLInterface.InsertData("loan", ["alma_id", "out_circ_desk", "patron_id", "item_id", "policy", "preferred_email", "loan_date", "due_date"], [
-                    overdue.ItemLoanId, overdue.CircDesk, patronId, itemId, overdue.ItemPolicy, overdue.PreferredEmail, overdue.LoanDate, overdue.DueDate], 0);
+                SQLInterface.InsertData("loan", 
+                    ["alma_id", "out_circ_desk", "patron_id", "item_id", 
+                    "policy", "preferred_email", "loan_date", "due_date"], 
+                    [overdue.ItemLoanId, overdue.CircDesk, patronId, itemId, overdue.ItemPolicy, 
+                    overdue.PreferredEmail, overdue.LoanDate, overdue.DueDate], 0);
             }
             else
             {
-                Logger<OverdueAnalytics>.Log($"Could not insert overdue because patron or item id is not greater than 0.\npatronId:\t{patronId}\nitemId:\t{itemId}", LogLevel.Error);
+                Logger<OverdueAnalytics>.Log($"Could not insert overdue because patron or item id is" + 
+                    " not greater than 0.\npatronId:\t{patronId}\nitemId:\t{itemId}", LogLevel.Error);
                 return 23;
             }
 
