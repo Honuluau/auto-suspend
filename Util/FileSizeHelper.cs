@@ -1,5 +1,5 @@
 public class FileSizeHelper {
-    private static readonly string[] Units = { "B", "KB", "MB", "GB", "TB", "PB" };
+    private static readonly string[] _units = { "B", "KB", "MB", "GB", "TB", "PB" };
 
     /// <summary>
     /// Formats a byte number by it's relative suffix.
@@ -10,11 +10,11 @@ public class FileSizeHelper {
         int unitIndex = 0;
         double readableSize = (double)size;
 
-        while (readableSize >= 1024 && unitIndex < Units.Length - 1) {
+        while (readableSize >= 1024 && unitIndex < _units.Length - 1) {
             readableSize /= 1024;
             unitIndex++;
         }
 
-        return $"{readableSize:0.#} {Units[unitIndex]}";
+        return $"{readableSize:0.#} {_units[unitIndex]}";
     }
 }
