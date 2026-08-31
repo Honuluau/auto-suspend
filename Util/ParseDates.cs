@@ -14,14 +14,15 @@ public class ParseDates
     /// Convertings a string into a datetime.
     /// </summary>
     /// <param name="dateTimeString">A string that matches DateTimeStyle: RoundtripKind</param>
-    /// <returns>A DateTime object or null.</returns>
-    public static DateTime? ConvertStringToDateTime(string dateTimeString)
+    /// <returns>A DateTime object.</returns>
+    public static DateTime ConvertStringToDateTime(string dateTimeString)
     {
-        try {
-            return DateTime.Parse(dateTimeString, null, System.Globalization.DateTimeStyles.RoundtripKind);        
-        } catch (Exception) {
-            return null;
-        }
+        /*
+        This method can fail and cause the entire program to shut down. This is intentional because if there
+        is any date-value that does not follow the format, then it is a deeper issue that needs to be
+        addressed in Alma.
+        */
+        return DateTime.Parse(dateTimeString, null, System.Globalization.DateTimeStyles.RoundtripKind);
     }
 
     /// <summary>
