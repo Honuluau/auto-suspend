@@ -19,14 +19,15 @@ public class Overdue // Derived information from the custom fulfillment report c
     // Loan information.
     public string CircDesk { get; set; }
     public string ItemLoanId { get; set; }
-    public string ItemPolicy { get; set; } // Policy may change in the future so it is important to count it with the Loan.
+    public string ItemPolicy { get; set; } // Policy may change in the future.
     public string LibraryName { get; set; }
     public string PreferredEmail { get; set; } // Same thought-process as policy.
     public string LoanDate { get; set; }
     public string DueDate { get; set; }
 
-    public Overdue(string firstName, string lastName, string userGroup, string userPrimaryIdentifier, string barcode, string title,
-    string circDesk, string itemLoadId, string itemPolicy, string libraryName, string? preferredEmail, string loanDate, string dueDate)
+    public Overdue(string firstName, string lastName, string userGroup, string userPrimaryIdentifier, 
+        string barcode, string title, string circDesk, string itemLoadId, string itemPolicy, 
+        string libraryName, string? preferredEmail, string loanDate, string dueDate)
     {
         this.FirstName = firstName;
         this.LastName = lastName;
