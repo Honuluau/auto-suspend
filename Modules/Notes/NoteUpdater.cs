@@ -54,7 +54,7 @@ public class NoteUpdater {
         // Get jsonData from Alma.
         HttpClient httpClient = HttpClientHouse.GetHttpClient();
         string url = $"{SensitiveInfo.GetUserDetailsUrl}{userPrimaryIdentifier}"
-            + "?apikey={SensitiveInfo.DevelopmentServerAPIKey}&format=json";
+            + $"?apikey={SensitiveInfo.DevelopmentServerAPIKey}&format=json";
         string jsonStringData = await httpClient.GetStringAsync(url);
         if (jsonStringData == null) {
             return 29;
@@ -78,7 +78,7 @@ public class NoteUpdater {
             // Check to see if it's a manual suspension. Logged for migrating notes.
             if (note_text.Contains("instance") && !note_text.Contains("auto-suspend")) {
                 Logger<NoteUpdater>.Log($"A note was flagged as a possible old suspension not created"
-                    + " from Auto-Suspend. UserPrimaryIdentifier: {userPrimaryIdentifier}", LogLevel.Info);
+                    + $" from Auto-Suspend. UserPrimaryIdentifier: {userPrimaryIdentifier}", LogLevel.Info);
                 continue;
             }
 
@@ -150,7 +150,7 @@ public class NoteUpdater {
                 "application/json");
 
             string putURL = $"{SensitiveInfo.GetUserDetailsUrl}{userPrimaryIdentifier}"
-                + "?apikey={SensitiveInfo.DevelopmentServerAPIKey}&format=json";
+                + $"?apikey={SensitiveInfo.DevelopmentServerAPIKey}&format=json";
             var putResponse = await httpClient.PutAsync(putURL, jsonStringNotes);
 
             if (!putResponse.IsSuccessStatusCode) {
@@ -158,7 +158,7 @@ public class NoteUpdater {
             }
             else {
                 Logger<NoteUpdater>.Log($"Successfully updated note id({note.Id.ToString()})"
-                    +" for user({userPrimaryIdentifier})", LogLevel.Info);
+                    + $" for user({userPrimaryIdentifier})", LogLevel.Info);
             }
             putResponse.EnsureSuccessStatusCode();
         }

@@ -93,8 +93,8 @@ public class OverdueAnalytics
             }
         }
 
-        Logger<OverdueAnalytics>.Log($"Successfully gathered ({Overdues.Count}) overdue analytics" + 
-            " in {Stopwatch.Stop()}.", LogLevel.Info);
+        Logger<OverdueAnalytics>.Log($"Successfully gathered ({Overdues.Count}) overdue analytics"
+            + $" in {Stopwatch.Stop()}.", LogLevel.Info);
         return 0;
     }
 
@@ -209,8 +209,8 @@ public class OverdueAnalytics
             }
             else
             {
-                Logger<OverdueAnalytics>.Log($"Could not insert overdue because patron or item id is" + 
-                    " not greater than 0.\npatronId:\t{patronId}\nitemId:\t{itemId}", LogLevel.Error);
+                Logger<OverdueAnalytics>.Log($"Could not insert overdue because patron or item id is"
+                    + $" not greater than 0.\npatronId:\t{patronId}\nitemId:\t{itemId}", LogLevel.Error);
                 return 23;
             }
 
