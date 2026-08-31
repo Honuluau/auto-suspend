@@ -1,5 +1,6 @@
 using System.Net;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Threading.Tasks;
 
 public class SystemCheck {
@@ -19,7 +20,12 @@ public class SystemCheck {
 
         if (drive.AvailableFreeSpace < 1000000) // 1 MB
         {
-            Logger<SystemCheck>.Log($"{drive.Name} has {FileSizeHelper.GetReadableFileSize(availableFreeSpace)} of storage which is less than 1MB.", LogLevel.Error);
+            StringBuilder builder = new StringBuilder(drive.Name);
+            builder.Append(" has ");
+            builder.Append(FileSizeHelper.GetReadableFileSize(availableFreeSpace));
+            builder.Append(" of storage which is less than 1MB.");
+
+            Logger<SystemCheck>.Log(builder.ToString(), LogLevel.Error);
             return 2;
         }
         else {

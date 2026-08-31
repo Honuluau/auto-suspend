@@ -72,6 +72,7 @@ public class UserFulfillment {
     /// <returns>An AlmaLoan if the loan is valid.</returns>
     private static async Task<AlmaLoan?> RequestLoan(HttpClient httpClient, string loanAlmaId,
         string userPrimaryIdentifier) {
+        
         // Form the length API url.
         StringBuilder urlBuilder = new StringBuilder(SensitiveInfo.GetUserDetailsUrl);
         urlBuilder.Append(userPrimaryIdentifier);
