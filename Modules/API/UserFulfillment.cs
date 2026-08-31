@@ -72,7 +72,7 @@ public class UserFulfillment {
     /// <returns>An AlmaLoan if the loan is valid.</returns>
     private static async Task<AlmaLoan?> RequestLoan(HttpClient httpClient, string loanAlmaId,
         string userPrimaryIdentifier) {
-        
+
         // Form the length API url.
         StringBuilder urlBuilder = new StringBuilder(SensitiveInfo.GetUserDetailsUrl);
         urlBuilder.Append(userPrimaryIdentifier);
@@ -116,8 +116,8 @@ public class UserFulfillment {
                 returnDateString = returnDate.Value;
             }
 
-            AlmaLoan loan = new AlmaLoan(userPrimaryIdentifierXML.Value, barcode.Value, itemPolicy.Value, 
-                loanId.Value, circDesk.Value, returnCircDeskString, libraryName.Value, dueDate.Value, 
+            AlmaLoan loan = new AlmaLoan(userPrimaryIdentifierXML.Value, barcode.Value, itemPolicy.Value,
+                loanId.Value, circDesk.Value, returnCircDeskString, libraryName.Value, dueDate.Value,
                 loanDate.Value, returnDateString);
 
             return loan;

@@ -1,5 +1,4 @@
-public enum StatusType
-{
+public enum StatusType {
     NULL,
     GRACE,
     SUSPENDED,

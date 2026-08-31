@@ -25,10 +25,9 @@ public class Overdue // Derived information from the custom fulfillment report c
     public string LoanDate { get; set; }
     public string DueDate { get; set; }
 
-    public Overdue(string firstName, string lastName, string userGroup, string userPrimaryIdentifier, 
-        string barcode, string title, string circDesk, string itemLoadId, string itemPolicy, 
-        string libraryName, string? preferredEmail, string loanDate, string dueDate)
-    {
+    public Overdue(string firstName, string lastName, string userGroup, string userPrimaryIdentifier,
+        string barcode, string title, string circDesk, string itemLoadId, string itemPolicy,
+        string libraryName, string? preferredEmail, string loanDate, string dueDate) {
         this.FirstName = firstName;
         this.LastName = lastName;
         this.UserGroup = userGroup;
@@ -45,8 +44,7 @@ public class Overdue // Derived information from the custom fulfillment report c
     }
 }
 
-public class OverdueAnalytics
-{
+public class OverdueAnalytics {
     public static List<Overdue> Overdues = new List<Overdue>();
 
     private static readonly XNamespace ROWSET = "urn:schemas-microsoft-com:xml-analysis:rowset";
@@ -57,38 +55,31 @@ public class OverdueAnalytics
     /// And inserts them into the SQL Database.
     /// </summary>
     /// <returns>Integer overflow.</returns>
-    public static async Task<int> GatherOverdueAnalytics()
-    {
+    public static async Task<int> GatherOverdueAnalytics() {
         HttpClient httpClient = HttpClientHouse.GetHttpClient();
         string? resumptionToken = null;
 
-        Logger<OverdueAnalytics>.Log($"Reading overdue analytics through API" + 
+        Logger<OverdueAnalytics>.Log($"Reading overdue analytics through API" +
             " and writing to database.", LogLevel.Info);
         Stopwatch.Start();
 
         // Get pages of overdues by iterating with the resumption token.
-        while (true)
-        {
+        while (true) {
             string? newResumptionToken = await GetPageOfOverdues(httpClient, resumptionToken);
-            if (newResumptionToken == null)
-            {
+            if (newResumptionToken == null) {
                 break;
             }
-            else if (newResumptionToken == "Fail")
-            {
+            else if (newResumptionToken == "Fail") {
                 return 13;
             }
-            else
-            {
+            else {
                 resumptionToken = newResumptionToken;
             }
         }
 
-        foreach (Overdue overdue in Overdues)
-        {
+        foreach (Overdue overdue in Overdues) {
             int success = InsertOverdue(overdue);
-            if (success != 0)
-            {
+            if (success != 0) {
                 return success;
             }
         }
@@ -102,8 +93,7 @@ public class OverdueAnalytics
     /// Get method.
     /// </summary>
     /// <returns>Number of total requests made with the API endpoint.</returns>
-    public static int GetTotalRequests()
-    {
+    public static int GetTotalRequests() {
         return _totalRequests;
     }
 
@@ -114,19 +104,16 @@ public class OverdueAnalytics
     /// <param name="httpClient">HttpClient to interact with the internet.</param>
     /// <param name="resumptionToken">A possible token for the next page. If none, then it is done.</param>
     /// <returns>Possible resumption token.</returns>
-    private static async Task<string?> GetPageOfOverdues(HttpClient httpClient, string? resumptionToken)
-    {
+    private static async Task<string?> GetPageOfOverdues(HttpClient httpClient, string? resumptionToken) {
         string? newResumptionToken = null; // Default to no resumption.
 
         // Format URL for request.
         string url = $"{SensitiveInfo.CustomOverdueReportUrl}&apikey={SensitiveInfo.AnalyticsAPIKey}";
-        if (resumptionToken != null)
-        {
+        if (resumptionToken != null) {
             url = $"{url}&token={resumptionToken}";
         }
 
-        try
-        {
+        try {
             // Retrieve XML data
             string xmlData = await httpClient.GetStringAsync(url);
             _totalRequests++;
@@ -136,16 +123,14 @@ public class OverdueAnalytics
             // Get Resumption Token if it exists.
             XElement queryResult = document.Root!.Element("QueryResult")!;
             XElement isFinishedElement = queryResult.Element("IsFinished")!;
-            if (isFinishedElement.Value == "false")
-            {
+            if (isFinishedElement.Value == "false") {
                 XElement resumptionTokenELement = queryResult.Element("ResumptionToken")!;
                 newResumptionToken = resumptionTokenELement.Value;
             }
 
             // Add overdues to list.
             var rows = document.Descendants(ROWSET + "Row");
-            foreach (XElement row in rows)
-            {
+            foreach (XElement row in rows) {
                 // Ugh. There has got to be a better way.
                 string firstName = row.Element(ROWSET + "Column1")!.Value;
                 string lastName = row.Element(ROWSET + "Column2")!.Value;
@@ -161,14 +146,13 @@ public class OverdueAnalytics
                 string dueDate = row.Element(ROWSET + "Column13")!.Value;
                 string loanDate = row.Element(ROWSET + "Column14")!.Value;
 
-                Overdue overdue = new Overdue(firstName, lastName, userGroup, userPrimaryIdentifier, 
-                    barcode, title, circDesk, itemLoadId, itemPolicy, libraryName, preferredEmail, 
+                Overdue overdue = new Overdue(firstName, lastName, userGroup, userPrimaryIdentifier,
+                    barcode, title, circDesk, itemLoadId, itemPolicy, libraryName, preferredEmail,
                     loanDate, dueDate);
                 Overdues.Add(overdue);
             }
         }
-        catch (Exception e)
-        {
+        catch (Exception e) {
             Logger<OverdueAnalytics>.Error("Failed to get page of overdues", e);
             return "FAIL";
         }
@@ -182,33 +166,29 @@ public class OverdueAnalytics
     /// </summary>
     /// <param name="overdue">Overdue class that holds all of the information of an overdue loan.</param>
     /// <returns>Integer overflow.</returns>
-    private static int InsertOverdue(Overdue overdue)
-    {
-        try
-        {
+    private static int InsertOverdue(Overdue overdue) {
+        try {
             // Insert Patron
-            SQLInterface.InsertData("patron", ["user_primary_identifier", "first_name", "last_name", 
-                "user_group"], [overdue.UserPrimaryIdentifier, overdue.FirstName, overdue.LastName, 
+            SQLInterface.InsertData("patron", ["user_primary_identifier", "first_name", "last_name",
+                "user_group"], [overdue.UserPrimaryIdentifier, overdue.FirstName, overdue.LastName,
                 overdue.UserGroup], 0);
 
             // Insert Item
             SQLInterface.InsertData("item", ["barcode", "title"], [overdue.Barcode, overdue.Title], 0);
 
             // Insert Loan
-            int patronId = SQLInterface.GetIdFromTable("patron", "user_primary_identifier", 
+            int patronId = SQLInterface.GetIdFromTable("patron", "user_primary_identifier",
                 overdue.UserPrimaryIdentifier);
             int itemId = SQLInterface.GetIdFromTable("item", "barcode", overdue.Barcode);
 
-            if (patronId > 0 && itemId > 0)
-            {
-                SQLInterface.InsertData("loan", 
-                    ["alma_id", "out_circ_desk", "patron_id", "item_id", 
-                    "policy", "preferred_email", "loan_date", "due_date"], 
-                    [overdue.ItemLoanId, overdue.CircDesk, patronId, itemId, overdue.ItemPolicy, 
+            if (patronId > 0 && itemId > 0) {
+                SQLInterface.InsertData("loan",
+                    ["alma_id", "out_circ_desk", "patron_id", "item_id",
+                    "policy", "preferred_email", "loan_date", "due_date"],
+                    [overdue.ItemLoanId, overdue.CircDesk, patronId, itemId, overdue.ItemPolicy,
                     overdue.PreferredEmail, overdue.LoanDate, overdue.DueDate], 0);
             }
-            else
-            {
+            else {
                 Logger<OverdueAnalytics>.Log($"Could not insert overdue because patron or item id is"
                     + $" not greater than 0.\npatronId:\t{patronId}\nitemId:\t{itemId}", LogLevel.Error);
                 return 23;
@@ -216,8 +196,7 @@ public class OverdueAnalytics
 
             return 0;
         }
-        catch (Exception e)
-        {
+        catch (Exception e) {
             Logger<OverdueAnalytics>.Error("Failed to insert overdue", e);
             return 23;
         }

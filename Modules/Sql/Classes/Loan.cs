@@ -1,5 +1,4 @@
-public class Loan
-{
+public class Loan {
     public int Id { get; set; }
     public string AlmaId { get; set; }
     public string OutCircDesk { get; set; }
@@ -13,8 +12,7 @@ public class Loan
     public DateTime? ReturnDate { get; set; }
     public int DaysOfGrace { get; set; }
 
-    public Loan(int id, string almaId, string outCircDesk, string inCircDesk, int patronId, Item item, string policy, string preferredEmail, DateTime loanDate, DateTime dueDate, DateTime? returnDate)
-    {
+    public Loan(int id, string almaId, string outCircDesk, string inCircDesk, int patronId, Item item, string policy, string preferredEmail, DateTime loanDate, DateTime dueDate, DateTime? returnDate) {
         this.Id = id;
         this.AlmaId = almaId;
         this.OutCircDesk = outCircDesk;
@@ -33,19 +31,16 @@ public class Loan
         {
             this.DaysOfGrace = 1;
         }
-        else
-        {
+        else {
             this.DaysOfGrace = 3;
         }
     }
 
-    public override string ToString()
-    {
+    public override string ToString() {
         return $"{this.Id}\t{this.AlmaId}\t{this.OutCircDesk}\t{this.InCircDesk}\t{this.PatronId}\t{this.Item.Barcode}\t{this.LoanDate}\t{this.DueDate}\t{this.ReturnDate}";
     }
 
-    public TimeSpan GetOverdueTimespan()
-    {
+    public TimeSpan GetOverdueTimespan() {
         // Check for grace period.
         return DateTime.Now - this.DueDate;
     }
