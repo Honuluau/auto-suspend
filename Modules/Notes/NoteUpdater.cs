@@ -1,7 +1,3 @@
-/*
-The purpose of this class is to handle how the program updates notes inside of Alma.
-*/
-
 using System.Collections;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
@@ -13,18 +9,15 @@ using System.Text.RegularExpressions;
 /// 3. OR adding the note to User Details if the note was not found.
 /// 4. Then a PUT request with the modified User Details
 /// </summary>
-public class NoteUpdater
-{
+public class NoteUpdater {
     /// <summary>
     /// Uses a regular expression to take the number ouf of a written note such as: "...(29)" = "29"
     /// </summary>
     /// <param name="writtenNote">A note that has been turned into a string.</param>
     /// <returns>The id as a string. If no Id is found, returns empty.</returns>
-    public static string GetIdFromWrittenNote(String writtenNote)
-    {
+    public static string GetIdFromWrittenNote(String writtenNote) {
         MatchCollection matches = Regex.Matches(writtenNote, @"\((.*?)\)");
-        if (matches.Count > 0)
-        {
+        if (matches.Count > 0) {
             // Get last number in parenthesis (#). Sometimes notes will be shortened which include a list of items also in parenthesis.
             return matches[matches.Count - 1].Groups[1].Value;
         }
@@ -37,8 +30,7 @@ public class NoteUpdater
     /// </summary>
     /// <param name="note">Note object.</param>
     /// <returns>If the note is viewable by a patron based on it's status.</returns>
-    public static bool IsNoteViewable(Note note)
-    {
+    public static bool IsNoteViewable(Note note) {
         return !(note.Status == StatusType.RESOLVED);
     }
 
@@ -50,12 +42,10 @@ public class NoteUpdater
     /// </remarks>
     /// <param name="note">The note object to update.</param>
     /// <returns></returns>
-    public static async Task<int> UpdateNote(Note note)
-    {
+    public static async Task<int> UpdateNote(Note note) {
         // Get the current UserPrimaryIdentifier for GET request.
         string? userPrimaryIdentifier = SQLInterface.GetUserPrimaryIdentifier(note.PatronId);
-        if (userPrimaryIdentifier == null)
-        {
+        if (userPrimaryIdentifier == null) {
             return 28;
         }
 
@@ -63,15 +53,13 @@ public class NoteUpdater
         HttpClient httpClient = HttpClientHouse.GetHttpClient();
         string url = $"{SensitiveInfo.GetUserDetailsUrl}{userPrimaryIdentifier}?apikey={SensitiveInfo.DevelopmentServerAPIKey}&format=json";
         string jsonStringData = await httpClient.GetStringAsync(url);
-        if (jsonStringData == null)
-        {
+        if (jsonStringData == null) {
             return 29;
         }
 
         // Using Dynamic Nodes in order to preserve any data in the UserDetails that is not modified.
         JsonNode? userDetails = JsonNode.Parse(jsonStringData);
-        if (userDetails == null)
-        {
+        if (userDetails == null) {
             return 30;
         }
 
@@ -81,23 +69,19 @@ public class NoteUpdater
         */
         JsonNode? targetNode = null; // The node/note the program updates.
         JsonArray userNotes = userDetails["user_note"]!.AsArray(); // user_note is always there.
-        foreach (JsonNode userNote in userNotes!)
-        {
+        foreach (JsonNode userNote in userNotes!) {
             String note_text = userNote["note_text"]!.GetValue<String>().ToLower();
 
             // Check to see if it's a manual suspension. Logged for migrating notes.
-            if (note_text.Contains("instance") && !note_text.Contains("auto-suspend"))
-            {
+            if (note_text.Contains("instance") && !note_text.Contains("auto-suspend")) {
                 Logger<NoteUpdater>.Log($"A note was flagged as a possible old suspension not created from Auto-Suspend. UserPrimaryIdentifier: {userPrimaryIdentifier}", LogLevel.Info);
                 continue;
             }
 
             // Check for Auto-Suspension tag, find the note's Id and check if it matches with the input note.
-            if (note_text.Contains("auto-suspend"))
-            {
+            if (note_text.Contains("auto-suspend")) {
                 String note_id = GetIdFromWrittenNote(note_text);
-                if (note_id == note.Id.ToString())
-                {
+                if (note_id == note.Id.ToString()) {
                     targetNode = userNote;
                 }
             }
@@ -109,18 +93,15 @@ public class NoteUpdater
         For there to be a targetNode, the array for userNotes must be valid so it is safe to assume userNotes is not null in this logic.
         */
         // Add note if no targetNode was found
-        if (targetNode == null)
-        {
+        if (targetNode == null) {
             Logger<NoteUpdater>.Log($"No previous note was found for note whose id={note.Id.ToString()}. Adding note.", LogLevel.Info);
 
             // Hide note if note is RESOLVED.
             bool viewable = IsNoteViewable(note);
 
             // Adding note.
-            JsonObject addedJson = new JsonObject
-            {
-                ["note_type"] = new JsonObject
-                {
+            JsonObject addedJson = new JsonObject {
+                ["note_type"] = new JsonObject {
                     ["value"] = "ADDRESS",
                     ["desc"] = "Address"
                 },
@@ -148,8 +129,7 @@ public class NoteUpdater
             targetNode["popup_note"] = viewable;
 
             // Only if the note has changed, send the note change signal.
-            if (oldNoteText != targetNode["note_text"]!.ToString())
-            {
+            if (oldNoteText != targetNode["note_text"]!.ToString()) {
                 noteChanged = true;
             }
         }
@@ -157,20 +137,17 @@ public class NoteUpdater
         /*
         Check to see if the note changed at all. If yes, send a PUT request for the new json object.
         */
-        if (noteChanged)
-        {
+        if (noteChanged) {
             // Format UserDetails
             var jsonStringNotes = new StringContent(userDetails.ToJsonString(), System.Text.Encoding.UTF8, "application/json");
 
             string putURL = $"{SensitiveInfo.GetUserDetailsUrl}{userPrimaryIdentifier}?apikey={SensitiveInfo.DevelopmentServerAPIKey}&format=json";
             var putResponse = await httpClient.PutAsync(putURL, jsonStringNotes);
 
-            if (!putResponse.IsSuccessStatusCode)
-            {
+            if (!putResponse.IsSuccessStatusCode) {
                 return 32;
             }
-            else
-            {
+            else {
                 Logger<NoteUpdater>.Log($"Successfully updated note id({note.Id.ToString()}) for user({userPrimaryIdentifier})", LogLevel.Info);
             }
             putResponse.EnsureSuccessStatusCode();
