@@ -1,12 +1,12 @@
 public class HttpClientHouse {
-    private static HttpClient httpClient = new HttpClient();
+    private static HttpClient _httpClient = new HttpClient();
 
     /// <summary>
     /// Retrieves static HttpClient.
     /// </summary>
     /// <returns>Static HttpClient among all classes.</returns>
     public static HttpClient GetHttpClient() {
-        return httpClient;
+        return _httpClient;
     }
 
     /// <summary>
@@ -14,6 +14,6 @@ public class HttpClientHouse {
     /// </summary>
     /// <param name="newHttpClient">New HttpClient</param>
     public static void SetHttpClient(HttpClient newHttpClient) {
-        httpClient = newHttpClient;
+        _httpClient = newHttpClient;
     }
 }
