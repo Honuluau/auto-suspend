@@ -68,7 +68,7 @@ public class NoteAnalysis {
                                     }
                                     break;
                                 default:
-                                    int error = AnalyzeNullNote(note, connection);
+                                    int error = AnalyzeNullNote(note);
                                     if (error != 0) {
                                         return error;
                                     }
@@ -92,55 +92,47 @@ public class NoteAnalysis {
 
     // Analyze Notes whose Status is NULL
     /// <summary>
-    /// A null note is a note that was just created in the current cycle. To push it along further, it must
-    /// be analyzed. Auto-Suspend's decision is based off if the item's have been returned and how long
-    /// have they been overdue. More information can be found in the method itself.
+    /// A null note is a note that was just created in the current cycle or a note that has not past the grace
+    /// period yet with unreturned items. To push it along further, it must be analyzed. Auto-Suspend's 
+    /// decision is based off if the item's have been returned and how long have they been overdue. More 
+    /// information can be found in the method itself.
     /// </summary>
     /// <param name="note">Note to check</param>
     /// <param name="connection">Sqlite connection to database.</param>
     /// <returns>Integer overflow.</returns>
-    public static int AnalyzeNullNote(Note note, SqliteConnection connection) {
+    public static int AnalyzeNullNote(Note note) {
         /*
-        When a note is created for an instance, all items that are overdue within that instance are present
-        in the list on that note. If an item is returned, it's presence on the list does not go away. If it
-        were to go away, then a staff member could not see the full overdue history of a patron. Knowing this,
-        
-
         A note gets set as GRACE if all items have been returned before the grace period ends.
         A note gets set as SUSPENDED if the items have not been returned and today is past the grace period.
+        A note's status stays at NULL if all of the loans have not been returned but it's before each
+        grace Deadline.
         */
-
-        bool allReturned = AllReturned(note);
-        int longestGracePeriodInDays = -1;
-        int longestOverdueInDays = -1;
+        bool suspended = false;
+        bool allReturned = true;
 
         foreach (Loan loan in note.Loans) {
-            // Find Longest Grace
-            if (longestGracePeriodInDays < loan.DaysOfGrace) {
-                longestGracePeriodInDays = loan.DaysOfGrace;
-            }
+            DateTime graceDeadline = loan.DueDate.AddDays(loan.DaysOfGrace);
 
-            // Find longest Overdue.
-            TimeSpan overdue = loan.GetOverdueTimespan();
-            if (longestOverdueInDays < overdue.Days) {
-                longestOverdueInDays = overdue.Days;
+            if (loan.ReturnDate == null) {
+                allReturned = false;
+                if (DateTime.Today > graceDeadline) suspended = true;
+            }
+            else {
+                if (loan.ReturnDate > graceDeadline) suspended = true;
             }
         }
 
-        if (allReturned == true) {
-            // Check to see if patron beat grace.
-            if (longestOverdueInDays < longestGracePeriodInDays) {
-                int success = SQLInterface.SetNoteStatus(note.Id, StatusType.GRACE);
-                if (success != 0) {
-                    return success;
-                }
-            }
-            else {
-                int success = SQLInterface.SetNoteStatus(note.Id, StatusType.SUSPENDED);
-                if (success != 0) {
-                    return success;
-                }
-            }
+        if (suspended) {
+            int success = SQLInterface.SetNoteStatus(note.Id, StatusType.SUSPENDED);
+            if (success != 0) return success;
+            note.Status = StatusType.SUSPENDED;
+            int chain = AnalyzeSuspendedNote(note);
+            if (chain != 0) return chain;
+        }
+        else if (allReturned) {
+            int success = SQLInterface.SetNoteStatus(note.Id, StatusType.GRACE);
+            if (success != 0) return success;
+            note.Status = StatusType.GRACE;
         }
 
         return 0;
@@ -155,9 +147,6 @@ public class NoteAnalysis {
     /// <returns>Integer overflow.</returns>
     public static int AnalyzeReinstatementNote(Note note) {
         try {
-            // To go from Reinstatement -> Resolved, all loans must have been returned after x amount of days. X = suspension length/period.
-
-            // Check if today IS the reinstatement date OR past. (Not now because it is too specific, suspensions have always been in days and not to the hour.)
             if (DateTime.Today >= GetReinstatementDateForNote(note)!.Value.Date) {
                 int success = SQLInterface.SetNoteStatus(note.Id, StatusType.RESOLVED);
                 if (success != 0) {
@@ -194,7 +183,7 @@ public class NoteAnalysis {
         }
         catch (Exception e) {
             Logger<NoteAnalysis>.Error($"An error occured while analyzing"
-                + " a suspension note: (noteId:{note.Id})", e);
+                + $" a suspension note: (noteId:{note.Id})", e);
             return 25;
         }
 
