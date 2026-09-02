@@ -239,13 +239,17 @@ public class NoteAnalysis {
     }
 
 
-    // Converts SQL Rows into a computable C# class.
+    /// <summary>
+    /// This method converts a sqlite datarow into a computable C# class that represents a note.
+    /// </summary>
+    /// <param name="row">DataRow from Sqlite</param>
+    /// <returns>Note</returns>
     private static Note? ConvertDataRowIntoNote(DataRow row) {
         try {
             // Variables from datarow.
+            DateTime date = ParseDates.ConvertStringToDateTime(row[2].ToString()!); // Safe to assert.
             int id = Convert.ToInt32(row[0]);
             int patron_id = Convert.ToInt32(row[1]);
-            DateTime date = ParseDates.ConvertStringToDateTime(row[2].ToString()!); // Date Field is NN so it is safe to assert.
             string? status = row[3].ToString();
             int updated = Convert.ToInt32(row[4]);
 
@@ -254,7 +258,7 @@ public class NoteAnalysis {
 
             // Update the Status Type if status is not null or "".
             if (status != null && status != "") {
-                statusType = (StatusType)Enum.Parse(typeof(StatusType), status!, true); // Safe assert because this can only run if status is not null.
+                statusType = (StatusType)Enum.Parse(typeof(StatusType), status!, true); // Safe assert.
             }
 
             // Create Note.
@@ -264,7 +268,8 @@ public class NoteAnalysis {
             return note;
         }
         catch (Exception e) {
-            Logger<NoteAnalysis>.Error($"An error occured while converting a datarow ({row.ToString()}) into a note.", e);
+            Logger<NoteAnalysis>.Error($"An error occured while converting"
+                + $" a datarow ({row.ToString()}) into a note.", e);
             return null;
         }
     }
