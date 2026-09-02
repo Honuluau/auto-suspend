@@ -206,29 +206,18 @@ public class NoteAnalysis {
     /// GetReinstatementDateForNote
     /// </summary>
     /// <param name="note"></param>
-    /// <returns></returns>
+    /// <returns>Most recent return date.</returns>
     public static DateTime? GetMostRecentReturnDate(Note note) {
-        DateTime? recentDate = note.Loans[0].ReturnDate;
+        DateTime? recentDate = null;
 
         foreach (Loan loan in note.Loans) {
-            if (loan.ReturnDate != null) // Loan was returned.
-            {
-                if (recentDate == null) // The first loan is not returned.
-                {
-                    recentDate = loan.ReturnDate; // Make this loan the most recent date.
-                }
-                else // First loan is returned.
-                {
-                    if (recentDate < loan.ReturnDate) // This new return date is earlier than the current most recent.
-                    {
-                        recentDate = loan.ReturnDate; // The most recent is now the new return date.
-                    }
-                }
+            if (loan.ReturnDate != null && (recentDate == null || recentDate < loan.ReturnDate)) {
+                recentDate = loan.ReturnDate;
             }
         }
 
         return recentDate;
-    } // Review this, this seems overly complicated.
+    }
 
 
     public static DateTime? GetReinstatementDateForNote(Note note) {
