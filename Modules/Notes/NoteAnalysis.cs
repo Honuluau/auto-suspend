@@ -219,11 +219,17 @@ public class NoteAnalysis {
         return recentDate;
     }
 
-
+    /// <summary>
+    /// This method gets the reinstatement date for a note by getting the most recent return date on a note.
+    /// If a note has no items returned, it will return Null because there is no most recent return date.
+    /// </summary>
+    /// <param name="note">Note to check.</param>
+    /// <returns>Reinstatement DateTime for note.</returns>
     public static DateTime? GetReinstatementDateForNote(Note note) {
         DateTime? mostRecentReturnDate = GetMostRecentReturnDate(note);
-        int suspendableInstance = MathUtil.Clamp(note.Instance, 1, Config.Current.SuspensionLengthsPerInstance.Length);
-        int suspensionLengthInDays = Config.Current.SuspensionLengthsPerInstance[suspendableInstance - 1] * 7; // -1 because C# Arrays start at an index = 0.
+        int maxSuspensionIndex = Config.Current.SuspensionLengthsPerInstance.Length;
+        int suspendableInstance = MathUtil.Clamp(note.Instance, 1, maxSuspensionIndex);
+        int suspensionLengthInDays = Config.Current.SuspensionLengthsPerInstance[suspendableInstance - 1] * 7;
 
         if (mostRecentReturnDate != null) {
             return mostRecentReturnDate.Value.AddDays(suspensionLengthInDays);
