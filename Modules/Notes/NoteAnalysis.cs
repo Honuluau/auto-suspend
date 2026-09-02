@@ -2,27 +2,27 @@ using System.Data;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.Data.Sqlite;
 
-public class NoteAnalysis
-{
-    // Grab notes that are not already RESOLVED and were given GRACE (items that were overdue but were returned before Grace period)
+public class NoteAnalysis {
+    // Grab all notes EXCEPT for notes set as RESOLVED or GRACE.
     private static readonly string GET_NOTES_SQL_COMMAND = $"""
         SELECT *
         FROM note
         WHERE note.status IS NULL OR note.status <> 'RESOLVED' AND note.status <> 'GRACE'
     """;
 
-    private static readonly string SET_COMMAND = "UPDATE note SET status = $status, updated = $updated WHERE id = $id";
+    private static readonly string SET_COMMAND = "UPDATE note SET status = $status, updated"
+        + " = $updated WHERE id = $id";
 
-
-    // Check if Note is All Returned.
-    public static bool AllReturned(Note note)
-    {
+    /// <summary>
+    /// Checks if all of the loans of a note have been returned.
+    /// </summary>
+    /// <param name="note">Note to check.</param>
+    /// <returns>False if a single return date is null.</returns>
+    public static bool AllReturned(Note note) {
         bool returned = true;
 
-        foreach (Loan loan in note.Loans)
-        {
-            if (loan.ReturnDate == null)
-            {
+        foreach (Loan loan in note.Loans) {
+            if (loan.ReturnDate == null) {
                 returned = false;
             }
         }
@@ -30,18 +30,192 @@ public class NoteAnalysis
         return returned;
     }
 
+    /// <summary>
+    /// This method iterates every note that is not either RESOLVED or GRACE. It checks to see it's current
+    /// status and then sorts it to a second, more specific, method to analyze it further.
+    /// </summary>
+    /// <returns>Integer overflow.</returns>
+    public static int AnalyzeNotes() {
+        Logger<NoteAnalysis>.Log($"Begun Note Analysis @ {DateTime.Now.ToString()}", LogLevel.Info);
 
-    public static DateTime? GetMostRecentReturnDate(Note note)
-    {
+        try {
+            using (SqliteConnection connection = new SqliteConnection(SQLInterface.CONNECTION_STRING)) {
+                connection.Open();
+
+                using (SqliteCommand command = new SqliteCommand(GET_NOTES_SQL_COMMAND, connection)) {
+                    SqliteDataReader reader = command.ExecuteReader();
+                    DataTable notesTable = new DataTable();
+                    notesTable.Load(reader);
+
+                    foreach (DataRow row in notesTable.Rows) {
+                        Note? note = ConvertDataRowIntoNote(row);
+                        if (note == null) {
+                            throw new Exception($"Unable to convert row ({row[0]}) to Note.");
+                        }
+                        else {
+                            // Decide which method to continue to for further analyzation.
+                            switch (note.Status) {
+                                case StatusType.REINSTATEMENT:
+                                    int reinstated = AnalyzeReinstatementNote(note);
+                                    if (reinstated != 0) {
+                                        return reinstated;
+                                    }
+                                    break;
+                                case StatusType.SUSPENDED:
+                                    int suspended = AnalyzeSuspendedNote(note);
+                                    if (suspended != 0) {
+                                        return suspended;
+                                    }
+                                    break;
+                                default:
+                                    int error = AnalyzeNullNote(note, connection);
+                                    if (error != 0) {
+                                        return error;
+                                    }
+                                    break;
+                            }
+                        }
+                    }
+                }
+
+                connection.Close();
+            }
+        }
+        catch (Exception e) {
+            Logger<NoteAnalysis>.Error("Something went wrong analyzing notes.", e);
+            return 10;
+        }
+
+        Logger<NoteAnalysis>.Log($"Ended Note Analysis @ {DateTime.Now.ToString()}", LogLevel.Info);
+        return 0;
+    }
+
+    // Analyze Notes whose Status is NULL
+    /// <summary>
+    /// A null note is a note that was just created in the current cycle. To push it along further, it must
+    /// be analyzed. Auto-Suspend's decision is based off if the item's have been returned and how long
+    /// have they been overdue. More information can be found in the method itself.
+    /// </summary>
+    /// <param name="note">Note to check</param>
+    /// <param name="connection">Sqlite connection to database.</param>
+    /// <returns>Integer overflow.</returns>
+    public static int AnalyzeNullNote(Note note, SqliteConnection connection) {
+        /*
+        When a note is created for an instance, all items that are overdue within that instance are present
+        in the list on that note. If an item is returned, it's presence on the list does not go away. If it
+        were to go away, then a staff member could not see the full overdue history of a patron. Knowing this,
+        
+
+        A note gets set as GRACE if all items have been returned before the grace period ends.
+        A note gets set as SUSPENDED if the items have not been returned and today is past the grace period.
+        */
+
+        bool allReturned = AllReturned(note);
+        int longestGracePeriodInDays = -1;
+        int longestOverdueInDays = -1;
+
+        foreach (Loan loan in note.Loans) {
+            // Find Longest Grace
+            if (longestGracePeriodInDays < loan.DaysOfGrace) {
+                longestGracePeriodInDays = loan.DaysOfGrace;
+            }
+
+            // Find longest Overdue.
+            TimeSpan overdue = loan.GetOverdueTimespan();
+            if (longestOverdueInDays < overdue.Days) {
+                longestOverdueInDays = overdue.Days;
+            }
+        }
+
+        if (allReturned == true) {
+            // Check to see if patron beat grace.
+            if (longestOverdueInDays < longestGracePeriodInDays) {
+                int success = SQLInterface.SetNoteStatus(note.Id, StatusType.GRACE);
+                if (success != 0) {
+                    return success;
+                }
+            }
+            else {
+                int success = SQLInterface.SetNoteStatus(note.Id, StatusType.SUSPENDED);
+                if (success != 0) {
+                    return success;
+                }
+            }
+        }
+
+        return 0;
+    }
+
+    /// <summary>
+    /// This method checks to see if a note that is currently in REINSTATEMENT, all loans have been returned,
+    /// can be set to RESOLVED. A note is set to RESOLVED if the note's reinstatement date is today or in
+    /// the past.
+    /// </summary>
+    /// <param name="note">Note to check.</param>
+    /// <returns>Integer overflow.</returns>
+    public static int AnalyzeReinstatementNote(Note note) {
+        try {
+            // To go from Reinstatement -> Resolved, all loans must have been returned after x amount of days. X = suspension length/period.
+
+            // Check if today IS the reinstatement date OR past. (Not now because it is too specific, suspensions have always been in days and not to the hour.)
+            if (DateTime.Today >= GetReinstatementDateForNote(note)!.Value.Date) {
+                int success = SQLInterface.SetNoteStatus(note.Id, StatusType.RESOLVED);
+                if (success != 0) {
+                    return success;
+                }
+            }
+
+            return 0;
+        }
+        catch (Exception e) {
+            Logger<NoteAnalysis>.Error($"Failed to analyze a reinstatement note ({note.Id})", e);
+            return 27;
+        }
+    }
+
+    /// <summary>
+    /// This method checks to see if all loans have been returned. If they have, then Auto-Suspend will
+    /// set their status to REINSTATEMENT which means that the suspension is no longer indefinite.
+    /// </summary>
+    /// <param name="note">Note to check.</param>
+    /// <returns>Integer overflow.</returns>
+    public static int AnalyzeSuspendedNote(Note note) {
+        try {
+            bool allReturned = AllReturned(note);
+
+            if (allReturned == true) {
+                int success = SQLInterface.SetNoteStatus(note.Id, StatusType.REINSTATEMENT);
+                if (success != 0) {
+                    return success;
+                }
+
+                AnalyzeReinstatementNote(note);
+            }
+        }
+        catch (Exception e) {
+            Logger<NoteAnalysis>.Error($"An error occured while analyzing"
+                + " a suspension note: (noteId:{note.Id})", e);
+            return 25;
+        }
+
+        return 0;
+    }
+
+    /// <summary>
+    /// This method gets the most recent return date for a note. It is singularly used by the method named
+    /// GetReinstatementDateForNote
+    /// </summary>
+    /// <param name="note"></param>
+    /// <returns></returns>
+    public static DateTime? GetMostRecentReturnDate(Note note) {
         DateTime? recentDate = note.Loans[0].ReturnDate;
 
-        foreach (Loan loan in note.Loans)
-        {
+        foreach (Loan loan in note.Loans) {
             if (loan.ReturnDate != null) // Loan was returned.
             {
                 if (recentDate == null) // The first loan is not returned.
                 {
-                    recentDate = loan.ReturnDate; // Make this loan the last
+                    recentDate = loan.ReturnDate; // Make this loan the most recent date.
                 }
                 else // First loan is returned.
                 {
@@ -54,17 +228,15 @@ public class NoteAnalysis
         }
 
         return recentDate;
-    }
+    } // Review this, this seems overly complicated.
 
 
-    public static DateTime? GetReinstatementDateForNote(Note note)
-    {
+    public static DateTime? GetReinstatementDateForNote(Note note) {
         DateTime? mostRecentReturnDate = GetMostRecentReturnDate(note);
         int suspendableInstance = MathUtil.Clamp(note.Instance, 1, Config.Current.SuspensionLengthsPerInstance.Length);
         int suspensionLengthInDays = Config.Current.SuspensionLengthsPerInstance[suspendableInstance - 1] * 7; // -1 because C# Arrays start at an index = 0.
 
-        if (mostRecentReturnDate != null)
-        {
+        if (mostRecentReturnDate != null) {
             return mostRecentReturnDate.Value.AddDays(suspensionLengthInDays);
         }
 
@@ -73,10 +245,8 @@ public class NoteAnalysis
 
 
     // Converts SQL Rows into a computable C# class.
-    private static Note? ConvertDataRowIntoNote(DataRow row)
-    {
-        try
-        {
+    private static Note? ConvertDataRowIntoNote(DataRow row) {
+        try {
             // Variables from datarow.
             int id = Convert.ToInt32(row[0]);
             int patron_id = Convert.ToInt32(row[1]);
@@ -88,8 +258,7 @@ public class NoteAnalysis
             StatusType statusType = StatusType.NULL;
 
             // Update the Status Type if status is not null or "".
-            if (status != null && status != "")
-            {
+            if (status != null && status != "") {
                 statusType = (StatusType)Enum.Parse(typeof(StatusType), status!, true); // Safe assert because this can only run if status is not null.
             }
 
@@ -99,257 +268,9 @@ public class NoteAnalysis
 
             return note;
         }
-        catch (Exception e)
-        {
+        catch (Exception e) {
             Logger<NoteAnalysis>.Error($"An error occured while converting a datarow ({row.ToString()}) into a note.", e);
             return null;
-        }
-    }
-
-
-    // Iterate over every note via the database and check if they need updating.
-    public static int AnalyzeNotes()
-    {
-        Logger<NoteAnalysis>.Log($"Begun Note Analysis @ {DateTime.Now.ToString()}", LogLevel.Info);
-
-        // SQL Interface is getting crowded and this is going to need it's own section for easy readability and development.
-        try
-        {
-            using (SqliteConnection connection = new SqliteConnection(SQLInterface.CONNECTION_STRING))
-            {
-                connection.Open();
-
-                using (SqliteCommand command = new SqliteCommand(GET_NOTES_SQL_COMMAND, connection))
-                {
-                    SqliteDataReader reader = command.ExecuteReader();
-                    DataTable notesTable = new DataTable();
-                    notesTable.Load(reader);
-
-                    foreach (DataRow row in notesTable.Rows)
-                    {
-                        Note? note = ConvertDataRowIntoNote(row);
-                        if (note == null)
-                        {
-                            throw new Exception($"Unable to convert row ({row[0]}) to Note.");
-                        }
-                        else
-                        {
-                            // Decide which method to continue to for further analyzation.
-                            switch (note.Status)
-                            {
-                                case StatusType.REINSTATEMENT:
-                                    int reinstated = AnalyzeReinstatementNote(note);
-                                    if (reinstated != 0)
-                                    {
-                                        return reinstated;
-                                    }
-                                    break;
-                                case StatusType.SUSPENDED:
-                                    int suspended = AnalyzeSuspendedNote(note);
-                                    if (suspended != 0)
-                                    {
-                                        return suspended;
-                                    }
-                                    break;
-                                default:
-                                    int error = AnalyzeNullNote(note, connection);
-                                    if (error != 0)
-                                    {
-                                        return error;
-                                    }
-                                    break;
-                            }
-                        }
-                    }
-                }
-
-                connection.Close();
-            }
-        }
-        catch (Exception e)
-        {
-            Logger<NoteAnalysis>.Error("Something went wrong analyzing notes.", e);
-            return 10;
-        }
-
-        Logger<NoteAnalysis>.Log($"Ended Note Analysis @ {DateTime.Now.ToString()}", LogLevel.Info);
-        return 0;
-    }
-
-
-    // Analyze Notes whose Status is NULL
-    public static int AnalyzeNullNote(Note note, SqliteConnection connection)
-    {
-        // To go from Null -> Grace, check to see if all items have been returned before the grace period ends.
-        // To go from Null -> Suspended, check to see if items have not been returned and today is the past the grace period.
-        bool allReturned = AllReturned(note);
-        int longestGracePeriodInDays = -1;
-        int longestOverdueInDays = -1;
-
-        Console.WriteLine($"Analyzing note ({note.Id})");
-
-        foreach (Loan loan in note.Loans)
-        {
-            // Find Longest Grace
-            if (longestGracePeriodInDays < loan.DaysOfGrace)
-            {
-                longestGracePeriodInDays = loan.DaysOfGrace;
-            }
-
-            // Find longest Overdue.
-            TimeSpan overdue = loan.GetOverdueTimespan();
-            if (longestOverdueInDays < overdue.Days)
-            {
-                longestOverdueInDays = overdue.Days;
-            }
-        }
-
-        if (allReturned == true)
-        {
-            // Check to see if patron beat grace.
-            if (longestOverdueInDays < longestGracePeriodInDays)
-            {
-                int success = SQLInterface.SetNoteStatus(note.Id, StatusType.GRACE);
-                if (success != 0)
-                {
-                    return success;
-                }
-            }
-            else
-            {
-                int success = SQLInterface.SetNoteStatus(note.Id, StatusType.SUSPENDED);
-                if (success != 0)
-                {
-                    return success;
-                }
-            }
-        }
-
-        return 0;
-
-        /*
-        bool allReturned = AllReturned(note);
-        int longestOverdue = -1;
-        int longestGrace = -1;
-
-        foreach (Loan loan in note.Loans!)
-        {
-            // Find Longest Grace
-            if (loan.DaysOfGrace > longestGrace)
-            {
-                longestGrace = loan.DaysOfGrace;
-            }
-
-            // Find Longest Overdue
-            TimeSpan overdue = loan.GetOverdueTimespan();
-            if (overdue.Days > longestOverdue)
-            {
-                longestOverdue = overdue.Days;
-            }
-        }
-
-        // Update SQL.
-        try
-        {
-            using (connection)
-            {
-                connection.Open();
-
-                using (SqliteCommand command = new SqliteCommand(SET_COMMAND, connection))
-                {
-                    command.Parameters.AddWithValue("$id", note.Id);
-
-                    if (allReturned == false)
-                    {
-                        // Check if past grace (most likely, if not all are before grace for a few days). During the development of ASAS, the excel sheets would contain loans within grace.
-                        if (longestOverdue > longestGrace)
-                        {
-                            command.Parameters.AddWithValue("$status", "SUSPENDED");
-                            command.Parameters.AddWithValue("$updated", "0"); // Value is unaligned with Alma (Needs Update).
-                        }
-                    else // Items are not returned but the user is still within the grace period before being overdue.
-                        {
-                            command.Parameters.AddWithValue("$status", DBNull.Value);
-                            command.Parameters.AddWithValue("$updated", "1");
-                        }
-                    }
-                    else if (longestOverdue <= longestGrace) // If all items are already returned and within grace period, then there should not be a suspension.
-                    {
-                        command.Parameters.AddWithValue("$status", "GRACE");
-                        command.Parameters.AddWithValue("$updated", "1");
-                    }
-                    else // All items are returned, but over the grace period. Create a suspension.
-                    {
-                        command.Parameters.AddWithValue("$status", "REINSTATEMENT");
-                        command.Parameters.AddWithValue("$updated", "0");
-                    }
-
-                    command.ExecuteNonQuery();
-                }
-            }
-        }
-        catch (Exception e)
-        {
-            Logger<NoteAnalysis>.Error("Error updating Null Note", e);
-            return 11;
-        }
-
-        return 0;
-        */
-    }
-
-
-    // Analyze note whose status is suspended i.e. check if patron qualifies for reinstatement.
-    public static int AnalyzeSuspendedNote(Note note)
-    {
-        try
-        {
-            // To go from suspended -> reinstated, we must check if all items are returned.        
-            bool allReturned = AllReturned(note);
-
-            if (allReturned == true)
-            {
-                // Update SQL and then continue to AnalyzeReinstatementNote -> Resolved.
-                int success = SQLInterface.SetNoteStatus(note.Id, StatusType.REINSTATEMENT);
-                if (success != 0)
-                {
-                    return success;
-                }
-
-                AnalyzeReinstatementNote(note);
-            }
-        }
-        catch (Exception e)
-        {
-            Logger<NoteAnalysis>.Error($"An error occured while analyzing a suspension note: (noteId:{note.Id})", e);
-            return 25;
-        }
-
-        return 0;
-    }
-
-    public static int AnalyzeReinstatementNote(Note note)
-    {
-        try
-        {
-            // To go from Reinstatement -> Resolved, all loans must have been returned after x amount of days. X = suspension length/period.
-
-            // Check if today IS the reinstatement date OR past. (Not now because it is too specific, suspensions have always been in days and not to the hour.)
-            if (DateTime.Today >= GetReinstatementDateForNote(note)!.Value.Date)
-            {
-                int success = SQLInterface.SetNoteStatus(note.Id, StatusType.RESOLVED);
-                if (success != 0)
-                {
-                    return success;
-                }
-            }
-
-            return 0;
-        }
-        catch (Exception e)
-        {
-            Logger<NoteAnalysis>.Error($"Failed to analyze a reinstatement note ({note.Id})", e);
-            return 27;
         }
     }
 }
