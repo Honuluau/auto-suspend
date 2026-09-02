@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Text;
 
 public class NoteConcatenation {
@@ -49,9 +50,7 @@ public class NoteConcatenation {
         builder.Append(detail.Status);
         builder.Append(" @ Instance #");
         builder.Append(detail.Instance);
-        builder.Append(" >> Item");
-        builder.Append(detail.PluralItemsMarker);
-        builder.Append(" Overdue: ");
+        builder.Append(" >> ");
         builder.Append(detail.ItemsList);
         builder.Append(" >> ");
         builder.Append(detail.EndStatement);
@@ -94,6 +93,26 @@ public class NoteConcatenation {
     }
 
     /// <summary>
+    /// This method appends a list to a string builder.
+    /// </summary>
+    /// <param name="builder">Current string builder.</param>
+    /// <param name="list">List of loans.</param>
+    /// <param name="listPrefix">LATE or LOST</param>
+    static void FormatList(StringBuilder builder, List<Loan> list, String listPrefix) {
+        if (list.Count() == 0) return;
+
+        builder.Append($" {listPrefix}: [");
+        foreach (Loan loan in list) {
+            builder.Append($"({loan.Item.Title}, {loan.Item.Barcode}), ");
+        }
+
+        // Remove last two characters to chop off comma.
+        builder.Length--;
+        builder.Length--;
+        builder.Append("]");
+    }
+
+    /// <summary>
     /// Formats the end of a string for a note. The result is determined on if the items are returned or not.
     /// This essentially either marks a note as UNRESOLVED or gives a REINSTATEMENT DATE.
     /// </summary>
@@ -117,20 +136,39 @@ public class NoteConcatenation {
     }
 
     /// <summary>
-    /// Formats the items specified by the loans of a note.
+    /// Formats the items specified by the loans of a note and marks if they were LATE or LOST.
     /// </summary>
     /// <param name="note"></param>
     /// <returns>A string that looks like this: [(Item1,02000),(Item2,03000)]</returns>
     static string GetItemsList(Note note) {
-        StringBuilder list = new System.Text.StringBuilder("[");
 
+        StringBuilder list = new System.Text.StringBuilder("");
+
+        // Form two lists, one LATE and one LOST.
+        List<Loan> late = new List<Loan>();
+        List<Loan> lost = new List<Loan>();
+
+        // Sort Loans
         foreach (Loan loan in note.Loans) {
-            list.Append($"({loan.Item.Title},{loan.Item.Barcode}),");
+            if (loan.ReturnDate == null) {
+                lost.Add(loan);
+            }
+            else {
+                // Add loan to late if it was after the grace period.
+                if (loan.ReturnDate > loan.DueDate.AddDays(loan.DaysOfGrace)) late.Add(loan);
+            }
         }
 
-        // Chop off last comma and close the list.
-        list.Length--;
-        list.Append("]");
+        // Add Lost and Late if they are not 0.
+        FormatList(list, lost, "LOST");
+        FormatList(list, late, "LATE");
+
+        Console.WriteLine(late.Count().ToString());
+        Console.WriteLine(lost.Count().ToString());
+
+        foreach (Loan loan in note.Loans) {
+            Console.WriteLine(loan.Id.ToString());
+        }
 
         return list.ToString();
     }
