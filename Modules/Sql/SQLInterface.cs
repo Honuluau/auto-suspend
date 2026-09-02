@@ -5,8 +5,7 @@ using System.Reflection.Metadata;
 using Microsoft.Data.Sqlite;
 using SQLitePCL;
 
-public class SQLInterface
-{
+public class SQLInterface {
     private static readonly string CREATE_PATRON_TABLE_COMMAND = """
         CREATE TABLE IF NOT EXISTS patron (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -84,22 +83,18 @@ public class SQLInterface
 
     public static string CONNECTION_STRING { get; set; } = "";
 
-    public static void Initialize(String dbPath)
-    {
+    public static void Initialize(String dbPath) {
         CONNECTION_STRING = $"Data Source={dbPath}";
     }
 
-    public static int CreateSqliteDB()
-    {
-        try
-        {
+    public static int CreateSqliteDB() {
+        try {
             Logger<SQLInterface>.Log("SQL initialization sequence started.", LogLevel.Info);
             using SqliteConnection connection = new SqliteConnection(CONNECTION_STRING);
             connection.Open();
 
             // Create Tables
-            for (int i = 0; i < CREATE_TABLE_COMMANDS.Length; i++)
-            {
+            for (int i = 0; i < CREATE_TABLE_COMMANDS.Length; i++) {
                 using var command = connection.CreateCommand();
                 command.CommandText = CREATE_TABLE_COMMANDS[i];
                 command.ExecuteNonQuery();
@@ -107,8 +102,7 @@ public class SQLInterface
 
             Logger<SQLInterface>.Log("SQL initialized successfully.", LogLevel.Info);
         }
-        catch (Exception e)
-        {
+        catch (Exception e) {
             Logger<SQLInterface>.Error("Failed to Initialize SQL database", e);
             return 8;
         }
@@ -120,13 +114,10 @@ public class SQLInterface
     This method pairs loans to their notes in SQL.
     If a loan's note does not exist, it will create a note for the loan.
     */
-    public static int ConsolidateLoans()
-    {
+    public static int ConsolidateLoans() {
         Logger<SQLInterface>.Log($"Consolidating loans into notes: {CONNECTION_STRING}", LogLevel.Info);
-        try
-        {
-            using (SqliteConnection connection = new SqliteConnection(CONNECTION_STRING))
-            {
+        try {
+            using (SqliteConnection connection = new SqliteConnection(CONNECTION_STRING)) {
                 /*
                 READ DATA
 
@@ -153,33 +144,28 @@ public class SQLInterface
 
                     // Find the matching note id from patron_id and loandate and create the note if it does not already exist.
                     string query = "SELECT id FROM note WHERE patron_id = $patronId AND date = $loanDate";
-                    using (SqliteCommand queryCommand = new SqliteCommand(query, connection))
-                    {
+                    using (SqliteCommand queryCommand = new SqliteCommand(query, connection)) {
                         queryCommand.Parameters.AddWithValue("$patronId", patronId);
                         queryCommand.Parameters.AddWithValue("$loanDate", loanDate.ToString("yyyy-MM-dd"));
 
                         var result = queryCommand.ExecuteScalar();
-                        if (result == null)
-                        {
+                        if (result == null) {
                             string append = "INSERT INTO note (patron_id, date, updated) VALUES ($patronId, $date, 0) RETURNING id";
-                            using (SqliteCommand appendCommand = new SqliteCommand(append, connection))
-                            {
+                            using (SqliteCommand appendCommand = new SqliteCommand(append, connection)) {
                                 appendCommand.Parameters.AddWithValue("$patronId", patronId);
                                 appendCommand.Parameters.AddWithValue("$date", loanDate.ToString("yyyy-MM-dd"));
 
                                 noteId = Convert.ToInt32(appendCommand.ExecuteScalar()!);
                             }
                         }
-                        else
-                        {
+                        else {
                             noteId = Convert.ToInt32(result);
                         }
                     }
 
                     // Create note_loan
                     string insert = "INSERT INTO note_loan (note_id, loan_id) VALUES ($noteId, $loanId)";
-                    using (SqliteCommand insertCommand = new SqliteCommand(insert, connection))
-                    {
+                    using (SqliteCommand insertCommand = new SqliteCommand(insert, connection)) {
                         insertCommand.Parameters.AddWithValue("$noteId", noteId);
                         insertCommand.Parameters.AddWithValue("$loanId", loanId);
 
@@ -190,8 +176,7 @@ public class SQLInterface
                 connection.Close();
             }
         }
-        catch (Exception e)
-        {
+        catch (Exception e) {
             Logger<SQLInterface>.Error("Failed to consolidate loans into notes", e);
             return 9;
         }
@@ -200,17 +185,13 @@ public class SQLInterface
     }
 
     // Get instance of a note using the corresponding note ID.
-    public static int GetInstance(int noteId)
-    {
-        try
-        {
+    public static int GetInstance(int noteId) {
+        try {
             int result = 0;
-            using (SqliteConnection connection = new SqliteConnection(CONNECTION_STRING))
-            {
+            using (SqliteConnection connection = new SqliteConnection(CONNECTION_STRING)) {
                 connection.Open();
                 string query = $"SELECT row_num FROM ( SELECT id, patron_id, ROW_NUMBER() OVER (PARTITION BY patron_id ORDER BY id) AS row_num FROM note ) t WHERE id = {noteId};";
-                using (SqliteCommand command = new SqliteCommand(query, connection))
-                {
+                using (SqliteCommand command = new SqliteCommand(query, connection)) {
                     result = Convert.ToInt32(command.ExecuteScalar())!;
                 }
 
@@ -219,8 +200,7 @@ public class SQLInterface
 
             return result;
         }
-        catch (Exception e)
-        {
+        catch (Exception e) {
             Logger<SQLInterface>.Error($"Failed to get instance number for note id: {noteId}", e);
             return 0;
         }
@@ -228,8 +208,7 @@ public class SQLInterface
 
     // Pull Items from Row.
 
-    public static Item GetItemFromRow(DataRow row)
-    {
+    public static Item GetItemFromRow(DataRow row) {
         int id = Convert.ToInt32(row[0]);
         string mmsId = row[1].ToString()!;
         string barcode = row[2].ToString()!;
@@ -239,17 +218,13 @@ public class SQLInterface
         return new Item(id, mmsId, barcode, title, description);
     }
 
-    public static Item? GetItemFromId(int itemId)
-    {
-        try
-        {
-            using (SqliteConnection connection = new SqliteConnection(CONNECTION_STRING))
-            {
+    public static Item? GetItemFromId(int itemId) {
+        try {
+            using (SqliteConnection connection = new SqliteConnection(CONNECTION_STRING)) {
                 connection.Open();
 
                 string query = "SELECT * FROM item WHERE id = $id";
-                using (SqliteCommand command = new SqliteCommand(query, connection))
-                {
+                using (SqliteCommand command = new SqliteCommand(query, connection)) {
                     command.Parameters.AddWithValue("$id", itemId);
                     SqliteDataReader reader = command.ExecuteReader();
                     DataTable table = new DataTable();
@@ -260,8 +235,7 @@ public class SQLInterface
                 }
             }
         }
-        catch (Exception e)
-        {
+        catch (Exception e) {
             Logger<SQLInterface>.Error($"Failed to get item from id {itemId}", e);
             return null;
         }
@@ -270,8 +244,7 @@ public class SQLInterface
 
 
     // Processes a DataRow generated by DataTable, specialized for Loans in SQL.
-    public static Loan GetLoanFromRow(DataRow row)
-    {
+    public static Loan GetLoanFromRow(DataRow row) {
         int id = Convert.ToInt32(row[0]);
         string almaId = row[1].ToString()!;
         string outCircDesk = row[2].ToString()!;
@@ -285,8 +258,7 @@ public class SQLInterface
 
         // Returns can be Null.
         DateTime? returnDate = null;
-        if (row[10].ToString() != "")
-        {
+        if (row[10].ToString() != "") {
             returnDate = ParseDates.ConvertStringToDateTime(row[10].ToString()!);
         }
 
@@ -294,20 +266,14 @@ public class SQLInterface
     }
 
     // Get loans
-    public static Loan[]? GetLoans(string query, Tuple<string, object>[]? parameters)
-    {
-        try
-        {
-            using (SqliteConnection connection = new SqliteConnection(CONNECTION_STRING))
-            {
+    public static Loan[]? GetLoans(string query, Tuple<string, object>[]? parameters) {
+        try {
+            using (SqliteConnection connection = new SqliteConnection(CONNECTION_STRING)) {
                 connection.Open();
 
-                using (SqliteCommand command = new SqliteCommand(query, connection))
-                {
-                    if (parameters != null)
-                    {
-                        foreach (Tuple<string, object> parameter in parameters)
-                        {
+                using (SqliteCommand command = new SqliteCommand(query, connection)) {
+                    if (parameters != null) {
+                        foreach (Tuple<string, object> parameter in parameters) {
                             command.Parameters.AddWithValue(parameter.Item1, parameter.Item2);
                         }
                     }
@@ -319,8 +285,7 @@ public class SQLInterface
 
                     Loan[] loans = new Loan[loansTable.Rows.Count];
 
-                    for (int i = 0; i < loansTable.Rows.Count; i++)
-                    {
+                    for (int i = 0; i < loansTable.Rows.Count; i++) {
                         loans[i] = GetLoanFromRow(loansTable.Rows[i]);
                     }
 
@@ -328,18 +293,15 @@ public class SQLInterface
                 }
             }
         }
-        catch (Exception e)
-        {
+        catch (Exception e) {
             Logger<SQLInterface>.Error($"An error occurred while getting notes.", e);
             return null;
         }
     }
 
     // Get all loans (including item) pertaining to notes
-    public static Loan[]? GetLoansForNote(int noteId)
-    {
-        try
-        {
+    public static Loan[]? GetLoansForNote(int noteId) {
+        try {
             // Set up arguments to get loans.
             string query = "SELECT * FROM loan JOIN note_loan ON loan.id = note_loan.loan_id WHERE note_loan.note_id = $noteId";
             Tuple<string, object>[] parameters =
@@ -350,24 +312,20 @@ public class SQLInterface
             Loan[]? loans = GetLoans(query, parameters);
             return loans;
         }
-        catch (Exception e)
-        {
+        catch (Exception e) {
             Logger<SQLInterface>.Error($"Failed to get loans for note: {noteId}", e);
             return null;
         }
     }
 
     // Get all loans that have a null value in return_date.
-    public static Loan[]? GetAllNonReturnedLoans()
-    {
-        try
-        {
+    public static Loan[]? GetAllNonReturnedLoans() {
+        try {
             string query = "SELECT * FROM loan WHERE return_date IS NULL";
             Loan[]? loans = GetLoans(query, null);
             return loans;
         }
-        catch (Exception e)
-        {
+        catch (Exception e) {
             Logger<SQLInterface>.Error("An error occurred retrieving all loans.", e);
             return null;
         }
@@ -375,17 +333,13 @@ public class SQLInterface
 
 
     // Get a row's id from a table in the SQL Database
-    public static int GetIdFromTable(string tableName, string columnName, object variable)
-    {
-        try
-        {
-            using (SqliteConnection connection = new SqliteConnection(CONNECTION_STRING))
-            {
+    public static int GetIdFromTable(string tableName, string columnName, object variable) {
+        try {
+            using (SqliteConnection connection = new SqliteConnection(CONNECTION_STRING)) {
                 connection.Open();
 
                 string query = $"SELECT * FROM {tableName} WHERE {columnName} = $var";
-                using (SqliteCommand command = new SqliteCommand(query, connection))
-                {
+                using (SqliteCommand command = new SqliteCommand(query, connection)) {
                     command.Parameters.AddWithValue("$var", variable);
 
                     SqliteDataReader reader = command.ExecuteReader();
@@ -394,19 +348,16 @@ public class SQLInterface
 
                     connection.Close();
 
-                    if (table.Rows.Count > 0)
-                    {
+                    if (table.Rows.Count > 0) {
                         return Convert.ToInt32(table.Rows[0][0]);
                     }
-                    else
-                    {
+                    else {
                         return 0;
                     }
                 }
             }
         }
-        catch (Exception e)
-        {
+        catch (Exception e) {
             Logger<SQLInterface>.Error($"Failed to get {tableName} id from {columnName} = {variable}", e);
             return -21;
         }
@@ -416,16 +367,12 @@ public class SQLInterface
     This method gets the UserPrimaryIdentifier from a patronId.
     Check for NULL value for failure.
     */
-    public static string? GetUserPrimaryIdentifier(int patronId)
-    {
-        try
-        {
-            using (SqliteConnection connection = new SqliteConnection(CONNECTION_STRING))
-            {
+    public static string? GetUserPrimaryIdentifier(int patronId) {
+        try {
+            using (SqliteConnection connection = new SqliteConnection(CONNECTION_STRING)) {
                 connection.Open();
 
-                using (SqliteCommand command = new SqliteCommand("SELECT user_primary_identifier FROM patron WHERE id = $patron_id", connection))
-                {
+                using (SqliteCommand command = new SqliteCommand("SELECT user_primary_identifier FROM patron WHERE id = $patron_id", connection)) {
                     command.Parameters.AddWithValue("$patron_id", patronId);
                     SqliteDataReader reader = command.ExecuteReader();
                     DataTable table = new DataTable();
@@ -433,8 +380,7 @@ public class SQLInterface
 
                     connection.Close();
 
-                    if (table.Rows.Count > 0)
-                    {
+                    if (table.Rows.Count > 0) {
                         return table.Rows[0][0].ToString();
                     }
 
@@ -442,20 +388,17 @@ public class SQLInterface
                 }
             }
         }
-        catch (Exception e)
-        {
+        catch (Exception e) {
             Logger<SQLInterface>.Error($"Failed to get UserPrimaryIdentifier for {patronId.ToString()}.", e);
             return null;
         }
     }
 
     // [a, b] = (a, b)
-    public static string ConvertStringListIntoSQLTuple(string[] stringList)
-    {
+    public static string ConvertStringListIntoSQLTuple(string[] stringList) {
         string result = "(";
 
-        foreach (string str in stringList)
-        {
+        foreach (string str in stringList) {
             result = $"{result}{str}, ";
         }
 
@@ -463,12 +406,10 @@ public class SQLInterface
     }
 
     // Turn number of variables into an SQL Tuple
-    public static string GetPlaceholdersForSQLTuple(int count)
-    {
+    public static string GetPlaceholdersForSQLTuple(int count) {
         string result = "(";
 
-        for (int i = 0; i < count; i++)
-        {
+        for (int i = 0; i < count; i++) {
             result = $"{result}$var{i}, ";
         }
 
@@ -480,22 +421,17 @@ public class SQLInterface
     checkIndex is the variable at x in columns and variables that the method will use to retrieve the id.
     Automatically checks for duplicates.
     */
-    public static int InsertData(string tableName, string[] columns, object[] variables, int checkIndex)
-    {
-        try
-        {
+    public static int InsertData(string tableName, string[] columns, object[] variables, int checkIndex) {
+        try {
             int id = GetIdFromTable(tableName, columns[checkIndex], variables[checkIndex]);
             if (id == 0) // 0 means that there is no id found meaming the data has not been already created.
             {
-                using (SqliteConnection connection = new SqliteConnection(CONNECTION_STRING))
-                {
+                using (SqliteConnection connection = new SqliteConnection(CONNECTION_STRING)) {
                     connection.Open();
 
                     string insertText = $"INSERT INTO {tableName} {ConvertStringListIntoSQLTuple(columns)} VALUES {GetPlaceholdersForSQLTuple(variables.Length)}";
-                    using (SqliteCommand insertCommand = new SqliteCommand(insertText, connection))
-                    {
-                        for (int i = 0; i < variables.Length; i++)
-                        {
+                    using (SqliteCommand insertCommand = new SqliteCommand(insertText, connection)) {
+                        for (int i = 0; i < variables.Length; i++) {
                             insertCommand.Parameters.AddWithValue($"$var{i}", variables[i]);
                         }
 
@@ -511,8 +447,7 @@ public class SQLInterface
             }
             return 0;
         }
-        catch (Exception e)
-        {
+        catch (Exception e) {
             Logger<SQLInterface>.Error($"Failed to write ({columns}) to {tableName} with ({variables})", e);
             return 22;
         }
@@ -520,18 +455,14 @@ public class SQLInterface
 
 
 
-    public static int SetNoteStatus(int noteId, StatusType status)
-    {
-        try
-        {
-            using (SqliteConnection connection = new SqliteConnection(CONNECTION_STRING))
-            {
+    public static int SetNoteStatus(int noteId, StatusType status) {
+        try {
+            using (SqliteConnection connection = new SqliteConnection(CONNECTION_STRING)) {
                 connection.Open();
 
                 string setCommand = "UPDATE note SET status = $status, updated = $updated WHERE id = $id";
 
-                using (SqliteCommand command = new SqliteCommand(setCommand, connection))
-                {
+                using (SqliteCommand command = new SqliteCommand(setCommand, connection)) {
                     command.Parameters.AddWithValue("$status", status.ToString());
                     command.Parameters.AddWithValue("$updated", 0);
                     command.Parameters.AddWithValue("$id", noteId);
@@ -541,9 +472,9 @@ public class SQLInterface
                 }
             }
         }
-        catch (Exception e)
-        {
-            Logger<SQLInterface>.Error($"Failed to set note status {status.ToString()} to note ({noteId})", e);
+        catch (Exception e) {
+            Logger<SQLInterface>.Error($"Failed to set note status {status.ToString()}"
+                + $" to note ({noteId})", e);
             return 26;
         }
 
