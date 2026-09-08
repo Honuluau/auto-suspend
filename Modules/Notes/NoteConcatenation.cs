@@ -103,7 +103,7 @@ public class NoteConcatenation {
 
         builder.Append($" {listPrefix}: [");
         foreach (Loan loan in list) {
-            builder.Append($"({loan.Item.Title}, {loan.Item.Barcode}), ");
+            builder.Append($"{loan.Item.ToString()}, ");
         }
 
         // Remove last two characters to chop off comma.

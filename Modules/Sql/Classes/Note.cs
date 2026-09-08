@@ -12,8 +12,8 @@ public class Note {
     /// </summary>
     /// <param name="id">Database Id.</param>
     /// <param name="patronId">Database Id.</param>
-    /// <param name="date">Loan date for loans connected to note.</param>
-    /// <param name="status">Status of the Note.</param>
+    /// <param name="date">The loan date for all loans connected to note.</param>
+    /// <param name="status">The current status of the note.</param>
     /// <param name="updated">1 = updated in Alma.</param>
     /// <param name="instance">The incident #; for example: second-offense.</param>
     public Note(int id, int patronId, DateTime date, StatusType status, int updated, int instance) {

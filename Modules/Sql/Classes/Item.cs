@@ -5,6 +5,14 @@ public class Item {
     public string Title { get; set; }
     public string Description { get; set; }
 
+    /// <summary>
+    /// Constructor method for Item.
+    /// </summary>
+    /// <param name="id">Database Id.</param>
+    /// <param name="mmsId">Inventory Id in Alma.</param>
+    /// <param name="barcode">Barcode in Alma.</param>
+    /// <param name="title">Title in Alma.</param>
+    /// <param name="description">Description in Alma.</param>
     public Item(int id, string mmsId, string barcode, string title, string description) {
         this.Id = id;
         this.MMSID = mmsId;
@@ -13,7 +21,11 @@ public class Item {
         this.Description = description;
     }
 
+    /// <summary>
+    /// This method implements ToString for this class.
+    /// </summary>
+    /// <returns></returns>
     public override string ToString() {
-        return $"(Item: {this.Id}\t{this.MMSID}\t{this.Barcode}\t{this.Title}\t{this.Description}";
+        return $"({this.Title}, {this.Barcode})";
     }
 }
