@@ -98,10 +98,16 @@ public class SQLCommands {
         ];
     }
 
+    /// <summary> Commands that pertain to items. </summary>
+    public class Item {
+        /// <summary>Gets an item by it's corresponding id.</summary>
+        public static string GET_ITEM_FROM_ID = "SELECT * FROM item WHERE id = $id";
+    }
+
     /// <summary> Commands that pertain to notes.</summary>
     public class Notes {
         /// <summary>Gets the current instance per note id.</summary>
-        /// <remarks>Requires @noteId</remarks> 
+        /// <remarks>Requires $noteId</remarks> 
         public static string GET_INSTANCE = """
             SELECT row_num 
             FROM ( 
@@ -111,7 +117,7 @@ public class SQLCommands {
                     ROW_NUMBER() OVER (PARTITION BY patron_id ORDER BY id) AS row_num
                 FROM note 
             )
-            WHERE id = @noteId
+            WHERE id = $noteId
         """;
     }
 }

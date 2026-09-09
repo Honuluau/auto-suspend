@@ -122,10 +122,11 @@ public class SQLInterface {
             using (SqliteConnection connection = new SqliteConnection(CONNECTION_STRING)) {
                 connection.Open();
 
-                using (SqliteCommand command = new SqliteCommand(SQLCommands.Notes.GET_INSTANCE, connection)) {
+                string command = SQLCommands.Notes.GET_INSTANCE;
+                using (SqliteCommand sqliteCommand = new SqliteCommand(command, connection)) {
 
-                    command.Parameters.AddWithValue("@noteId", noteId);
-                    result = Convert.ToInt32(command.ExecuteScalar())!;
+                    sqliteCommand.Parameters.AddWithValue("$noteId", noteId);
+                    result = Convert.ToInt32(sqliteCommand.ExecuteScalar())!;
                 }
             }
         }
@@ -136,37 +137,48 @@ public class SQLInterface {
         return result;
     }
 
-    // Pull Items from Row.
-
+    /// <summary>
+    /// Translates a datarow into an Item class.
+    /// </summary>
+    /// <param name="row">Datarow from sqlite command.</param>
+    /// <returns>An <see cref="Item"/> instance populated from row.</returns>
     public static Item GetItemFromRow(DataRow row) {
-        int id = Convert.ToInt32(row[0]);
-        string mmsId = row[1].ToString()!;
-        string barcode = row[2].ToString()!;
-        string title = row[3].ToString()!;
-        string description = row[4].ToString()!;
+        int id = Convert.ToInt32(row["id"]);
+        string mmsId = row["mms_id"].ToString()!;
+        string barcode = row["barcode"].ToString()!;
+        string title = row["title"].ToString()!;
+        string description = row["description"].ToString()!;
 
         return new Item(id, mmsId, barcode, title, description);
     }
 
+    /// <summary>
+    /// Gets an item by searching for it with its id.
+    /// </summary>
+    /// <param name="itemId">Database id.</param>
+    /// <returns>An <see cref="Item"/> or null if not found.</returns>
     public static Item? GetItemFromId(int itemId) {
         try {
             using (SqliteConnection connection = new SqliteConnection(CONNECTION_STRING)) {
                 connection.Open();
 
-                string query = "SELECT * FROM item WHERE id = $id";
-                using (SqliteCommand command = new SqliteCommand(query, connection)) {
-                    command.Parameters.AddWithValue("$id", itemId);
-                    SqliteDataReader reader = command.ExecuteReader();
+                string command = SQLCommands.Item.GET_ITEM_FROM_ID;
+                using (SqliteCommand sqliteCommand = new SqliteCommand(command, connection)) {
+                    sqliteCommand.Parameters.AddWithValue("$id", itemId);
+                    SqliteDataReader reader = sqliteCommand.ExecuteReader();
                     DataTable table = new DataTable();
                     table.Load(reader);
 
-                    connection.Close();
+                    if (table.Rows.Count == 0) {
+                        Logger<SQLInterface>.Error($"No rows found for id ({itemId}).", null);
+                    }
+
                     return GetItemFromRow(table.Rows[0]);
                 }
             }
         }
         catch (Exception e) {
-            Logger<SQLInterface>.Error($"Failed to get item from id {itemId}", e);
+            Logger<SQLInterface>.Error($"Failed to get item with id({itemId}).", e);
             return null;
         }
     }

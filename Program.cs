@@ -96,6 +96,11 @@ public class AutoSuspend
         Loans: 166, 167
         UserPrimaryIdentifier: 901393728
         */
+
+        Item item = SQLInterface.GetItemFromId(3)!;
+        Console.WriteLine(item.ToString());
+
+        /*
         Note note = new Note(98, 84, ParseDates.ConvertStringToDateTime("2026-04-19"), StatusType.SUSPENDED, 0, SQLInterface.GetInstance(98));
         //Note note = new Note(1, 1, ParseDates.ConvertStringToDateTime("2025-12-03"), StatusType.SUSPENDED, 0, SQLInterface.GetInstance(1));
         //Note note = new Note(2, 2, ParseDates.ConvertStringToDateTime("2026-07-05"), StatusType.SUSPENDED, 0, SQLInterface.GetInstance(2)); // LONG NOTE
