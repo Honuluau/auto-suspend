@@ -1,86 +1,7 @@
-using System.ComponentModel;
 using System.Data;
-using System.IO.Pipelines;
-using System.Reflection.Metadata;
 using Microsoft.Data.Sqlite;
-using SQLitePCL;
 
 public class SQLInterface {
-    private static readonly string CREATE_PATRON_TABLE_COMMAND = """
-        CREATE TABLE IF NOT EXISTS patron (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_primary_identifier TEXT,
-            first_name TEXT,
-            last_name TEXT,
-            user_group TEXT
-        )
-    """;
-
-    private static readonly string CREATE_ITEM_TABLE_COMMAND = """
-        CREATE TABLE IF NOT EXISTS item (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            mms_id TEXT,
-            barcode TEXT,
-            title TEXT,
-            description TEXT
-        )
-    """;
-
-    private static readonly string CREATE_LOAN_TABLE_COMMAND = """
-        CREATE TABLE IF NOT EXISTS loan (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            alma_id TEXT,
-            out_circ_desk TEXT,
-            in_circ_desk TEXT,
-            patron_id INTEGER,
-            item_id INTEGER,
-            policy TEXT,
-            preferred_email TEXT,
-            loan_date TEXT,
-            due_date TEXT,
-            return_date TEXT,
-
-            FOREIGN KEY(patron_id) REFERENCES patron(id),
-            FOREIGN KEY(item_id) REFERENCES item(id)
-        )
-    """;
-
-    private static readonly string CREATE_NOTE_TABLE_COMMAND = """ 
-        CREATE TABLE IF NOT EXISTS note (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            patron_id INTEGER,
-            date TEXT,
-            status INTEGER,
-            updated INTEGER, 
-
-            FOREIGN KEY(patron_id) REFERENCES patron(id)
-        )
-    """; // 0 = NOT UPDATED, NOTE NEEDS TO BE PUBLISHED TO ALMA // 1 = UPDATED, NO ACTION NECESSARY.
-
-    private static readonly string CREATE_NOTE_LOAN_TABLE_COMMAND = """
-        CREATE TABLE IF NOT EXISTS note_loan (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            note_id INTEGER,
-            loan_id INTEGER,
-
-            FOREIGN KEY(note_id) REFERENCES note(id),
-            FOREIGN KEY(loan_id) REFERENCES loan(id)
-        )
-    """;
-
-    private static readonly string CREATE_PERM_SUSPEND_TABLE_COMMAND = """
-        CREATE TABLE IF NOT EXISTS perm_suspend (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            patron_id INTEGER,
-            note TEXT,
-
-            FOREIGN KEY(patron_id) REFERENCES patron(id)
-        )
-    """;
-
-    private static readonly string[] CREATE_TABLE_COMMANDS = [CREATE_PATRON_TABLE_COMMAND, CREATE_ITEM_TABLE_COMMAND, CREATE_LOAN_TABLE_COMMAND,
-        CREATE_NOTE_TABLE_COMMAND, CREATE_NOTE_LOAN_TABLE_COMMAND, CREATE_PERM_SUSPEND_TABLE_COMMAND];
-
     public static string CONNECTION_STRING { get; set; } = "";
 
     public static void Initialize(String dbPath) {
@@ -94,9 +15,9 @@ public class SQLInterface {
             connection.Open();
 
             // Create Tables
-            for (int i = 0; i < CREATE_TABLE_COMMANDS.Length; i++) {
+            for (int i = 0; i < SQLCommands.CreateTable.CREATE_TABLE_COMMANDS.Length; i++) {
                 using var command = connection.CreateCommand();
-                command.CommandText = CREATE_TABLE_COMMANDS[i];
+                command.CommandText = SQLCommands.CreateTable.CREATE_TABLE_COMMANDS[i];
                 command.ExecuteNonQuery();
             }
 
