@@ -10,6 +10,10 @@ public class SQLInterface {
         CONNECTION_STRING = $"Data Source={dbPath}";
     }
 
+    /// <summary>
+    /// This method creates all of the tables that do not already exist inside the database.
+    /// </summary>
+    /// <returns>Integer overflow.</returns>
     public static int CreateSqliteDB() {
         Logger<SQLInterface>.Log("SQL initialization sequence started.", LogLevel.Info);
 
