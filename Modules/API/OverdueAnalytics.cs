@@ -4,8 +4,8 @@ using System.Net;
 using System.Xml.Linq;
 using System.Xml.XPath;
 
-public class Overdue // Derived information from the custom fulfillment report created by Justin.
-{
+/// <summary> Derived information from the custom fulfillment report created by Justin. </summary>
+public class Overdue {
     // Patron information.
     public string FirstName { get; set; }
     public string LastName { get; set; }
@@ -90,7 +90,7 @@ public class OverdueAnalytics {
     }
 
     /// <summary>
-    /// Get method.
+    /// Get method for Total Requests variable.
     /// </summary>
     /// <returns>Number of total requests made with the API endpoint.</returns>
     public static int GetTotalRequests() {
