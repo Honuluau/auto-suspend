@@ -104,7 +104,7 @@ public class UserFulfillment {
             // For some unknown reason, Alma always includes this in the XML but keeps it empty.
             XElement returnCircDesk = document.Root!.Element("return_circ_desk")!;
 
-            // Creating the Alma Loan.
+            // Creating the Alma Loan. 
             string? returnCircDeskString = null;
             string? returnDateString = null;
 
