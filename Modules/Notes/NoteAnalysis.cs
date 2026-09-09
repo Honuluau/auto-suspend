@@ -10,9 +10,6 @@ public class NoteAnalysis {
         WHERE note.status IS NULL OR note.status <> 'RESOLVED' AND note.status <> 'GRACE'
     """;
 
-    private static readonly string SET_COMMAND = "UPDATE note SET status = $status, updated"
-        + " = $updated WHERE id = $id";
-
     /// <summary>
     /// Checks if all of the loans of a note have been returned.
     /// </summary>
@@ -149,9 +146,7 @@ public class NoteAnalysis {
         try {
             if (DateTime.Today >= GetReinstatementDateForNote(note)!.Value.Date) {
                 int success = SQLInterface.SetNoteStatus(note.Id, StatusType.RESOLVED);
-                if (success != 0) {
-                    return success;
-                }
+                if (success != 0) return success;
             }
 
             return 0;
@@ -170,13 +165,9 @@ public class NoteAnalysis {
     /// <returns>Integer overflow.</returns>
     public static int AnalyzeSuspendedNote(Note note) {
         try {
-            bool allReturned = AllReturned(note);
-
-            if (allReturned == true) {
+            if (AllReturned(note)) {
                 int success = SQLInterface.SetNoteStatus(note.Id, StatusType.REINSTATEMENT);
-                if (success != 0) {
-                    return success;
-                }
+                if (success != 0) return success;
 
                 AnalyzeReinstatementNote(note);
             }
