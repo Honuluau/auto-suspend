@@ -4,21 +4,24 @@ using Microsoft.Data.Sqlite;
 public class SQLInterface {
     public static string CONNECTION_STRING { get; set; } = "";
 
+    /// <summary>This method sets the CONNECTION_STRING.</summary>
+    /// <param name="dbPath">Path to database file.</param>
     public static void Initialize(String dbPath) {
         CONNECTION_STRING = $"Data Source={dbPath}";
     }
 
     public static int CreateSqliteDB() {
-        try {
-            Logger<SQLInterface>.Log("SQL initialization sequence started.", LogLevel.Info);
-            using SqliteConnection connection = new SqliteConnection(CONNECTION_STRING);
-            connection.Open();
+        Logger<SQLInterface>.Log("SQL initialization sequence started.", LogLevel.Info);
 
-            // Create Tables
-            for (int i = 0; i < SQLCommands.CreateTable.CREATE_TABLE_COMMANDS.Length; i++) {
-                using var command = connection.CreateCommand();
-                command.CommandText = SQLCommands.CreateTable.CREATE_TABLE_COMMANDS[i];
-                command.ExecuteNonQuery();
+        try {
+            using (SqliteConnection connection = new SqliteConnection(CONNECTION_STRING)) {
+                connection.Open();
+
+                // Create tables.
+                foreach (string command in SQLCommands.CreateTable.CREATE_TABLE_COMMANDS) {
+                    using SqliteCommand sqliteCommand = new SqliteCommand(command, connection);
+                    sqliteCommand.ExecuteNonQuery();
+                }
             }
 
             Logger<SQLInterface>.Log("SQL initialized successfully.", LogLevel.Info);
@@ -105,26 +108,32 @@ public class SQLInterface {
         return 0;
     }
 
-    // Get instance of a note using the corresponding note ID.
+    /// <summary>
+    /// Gets the instance of a note using it's corresponding note id. An instance is the ordinal position of 
+    /// a note within a patron's note history. The first note recorded for a patron is instance #1, the 
+    /// second is instance #2.
+    /// </summary>
+    /// <param name="noteId">Database id for note.</param>
+    /// <returns>Result which will either be a true instance number or 0 if failed.</returns>
     public static int GetInstance(int noteId) {
+        int result = 0;
+
         try {
-            int result = 0;
             using (SqliteConnection connection = new SqliteConnection(CONNECTION_STRING)) {
                 connection.Open();
-                string query = $"SELECT row_num FROM ( SELECT id, patron_id, ROW_NUMBER() OVER (PARTITION BY patron_id ORDER BY id) AS row_num FROM note ) t WHERE id = {noteId};";
-                using (SqliteCommand command = new SqliteCommand(query, connection)) {
+
+                using (SqliteCommand command = new SqliteCommand(SQLCommands.Notes.GET_INSTANCE, connection)) {
+
+                    command.Parameters.AddWithValue("@noteId", noteId);
                     result = Convert.ToInt32(command.ExecuteScalar())!;
                 }
-
-                connection.Close();
             }
-
-            return result;
         }
         catch (Exception e) {
             Logger<SQLInterface>.Error($"Failed to get instance number for note id: {noteId}", e);
-            return 0;
         }
+
+        return result;
     }
 
     // Pull Items from Row.

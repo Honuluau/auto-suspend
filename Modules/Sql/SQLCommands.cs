@@ -97,4 +97,21 @@ public class SQLCommands {
             CREATE_TABLE_PERM_SUSPEND
         ];
     }
+
+    /// <summary> Commands that pertain to notes.</summary>
+    public class Notes {
+        /// <summary>Gets the current instance per note id.</summary>
+        /// <remarks>Requires @noteId</remarks> 
+        public static string GET_INSTANCE = """
+            SELECT row_num 
+            FROM ( 
+                SELECT 
+                    id, 
+                    patron_id, 
+                    ROW_NUMBER() OVER (PARTITION BY patron_id ORDER BY id) AS row_num
+                FROM note 
+            )
+            WHERE id = @noteId
+        """;
+    }
 }
