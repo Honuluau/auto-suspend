@@ -7,7 +7,12 @@ public static class Logger<T> {
     /// </summary>
     /// <param name="message"></param>
     /// <param name="e"></param>
-    public static void Error(string message, Exception e) {
+    public static void Error(string message, Exception? e) {
+        if (e == null) {
+            Log(message, LogLevel.Error);
+            return;    
+        }
+        
         Log($"{message}. ( {e.Message} ).\n{e.StackTrace}", LogLevel.Error);
     }
 
