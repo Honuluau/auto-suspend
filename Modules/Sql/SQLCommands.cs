@@ -101,14 +101,14 @@ public class SQLCommands {
     /// <summary> Commands that pertain to items. </summary>
     public class Item {
         /// <summary>Gets an item by it's corresponding id.</summary>
-        public static string GET_ITEM_FROM_ID = "SELECT * FROM item WHERE id = $id";
+        public static readonly string GET_ITEM_FROM_ID = "SELECT * FROM item WHERE id = $id";
     }
 
     /// <summary> Commands that pertain to notes.</summary>
-    public class Notes {
+    public class Note {
         /// <summary>Gets the current instance per note id.</summary>
         /// <remarks>Requires $noteId</remarks> 
-        public static string GET_INSTANCE = """
+        public static readonly string GET_INSTANCE = """
             SELECT row_num 
             FROM ( 
                 SELECT 
@@ -118,6 +118,20 @@ public class SQLCommands {
                 FROM note 
             )
             WHERE id = $noteId
+        """;
+    }
+
+    /// <summary> Commands that pertain to loans. </summary>
+    public class Loan {
+        public static readonly string GET_ALL_NON_RETURNED_LOANS = """
+        
+        """;
+
+        public static readonly string GET_LOANS_FOR_NOTE = """
+            SELECT *
+            FROM loan
+            JOIN note_loan on loan.id = note_loan.loan_id
+            WHERE note_loan.note_id = $noteId
         """;
     }
 }

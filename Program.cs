@@ -97,8 +97,12 @@ public class AutoSuspend
         UserPrimaryIdentifier: 901393728
         */
 
-        Item item = SQLInterface.GetItemFromId(3)!;
-        Console.WriteLine(item.ToString());
+        Loan[]? loans = SQLInterface.GetLoansForNote(2);
+        if (loans != null && loans.Count() > 0) {
+            foreach (Loan loan in loans) {
+                Console.WriteLine(loan.Item.ToString());
+            }
+        }
 
         /*
         Note note = new Note(98, 84, ParseDates.ConvertStringToDateTime("2026-04-19"), StatusType.SUSPENDED, 0, SQLInterface.GetInstance(98));
