@@ -120,6 +120,16 @@ public class SQLCommands {
 
     /// <summary> Commands that pertain to loans. </summary>
     public class Loan {
+        public static readonly String GET_ALL_NON_LINKED_LOANS = """
+            SELECT l.id, l.loan_date, l.patron_id
+            FROM loan AS l
+            WHERE NOT EXISTS (
+                SELECT 1
+                FROM note_loan AS nl
+                WHERE nl.loan_id = l.id
+            )
+        """;
+
         public static readonly string GET_ALL_NON_RETURNED_LOANS = """
             SELECT *
             FROM loan
@@ -149,6 +159,30 @@ public class SQLCommands {
                 FROM note 
             )
             WHERE id = $note_id
+        """;
+
+        /// <summary>Get id of note from the database id of a patron and the date of a loan.
+        /// <remarks>Requires $patronId and $loanDate. May return nothing.</remarks>
+        public static readonly string GET_ID = """
+            SELECT id
+            FROM note
+            WHERE patron_id = $patronId
+                AND date = $loanDate
+        """;
+
+        // <summary>Inserts a note.</summary>
+        // <remarks>Requires $patron_id, $date. Returns id.</remarks>
+        public static readonly String INSERT_NOTE = """
+            INSERT INTO note (patron_id, date, updated)
+            VALUES ($patronId, $loanDate, 0)
+            RETURNING id
+        """;
+
+        /// <summary>Creates note_loan</summary>
+        /// <remarks>Requires $noteId and $loanId</remarks>
+        public static readonly String LINK_LOAN = """
+            INSERT INTO note_loan (note_id, loan_id)
+            VALUES ($noteId, $loanId)
         """;
 
         /// <summary>Updates a notes status.</summary>

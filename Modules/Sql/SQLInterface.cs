@@ -7,80 +7,6 @@ public class SQLInterface {
     public static string CONNECTION_STRING { get; set; } = "";
 
     /// <summary>
-    /// Consolidate loans.
-    /// </summary>
-    /// <returns></returns>
-    public static int ConsolidateLoans() {
-        Logger<SQLInterface>.Log($"Consolidating loans into notes: {CONNECTION_STRING}", LogLevel.Info);
-        try {
-            using (SqliteConnection connection = new SqliteConnection(CONNECTION_STRING)) {
-                /*
-                READ DATA
-
-                Pull the id and loan_date from the database of all loans that are not attached to a note via a note_loan instance. 
-                This creates a 2x? data table if not empty.
-                */
-
-                connection.Open();
-                SqliteCommand command = new SqliteCommand("SELECT loan.id, loan.loan_date, loan.patron_id FROM loan WHERE NOT EXISTS (SELECT 1 FROM note_loan WHERE note_loan.loan_id = loan.id)", connection);
-                SqliteDataReader reader = command.ExecuteReader();
-
-                DataTable dataTable = new DataTable();
-                dataTable.Load(reader);
-
-                reader.Close();
-
-                // Consolidation
-                foreach (DataRow row in dataTable.Rows) // For each loan that does not have a note connected to it,
-                {
-                    int loanId = Convert.ToInt32(row[0]);
-                    DateTime loanDate = ParseDates.ConvertStringToDateTime(row[1].ToString()!);
-                    int patronId = Convert.ToInt32(row[2]);
-                    int noteId = -1;
-
-                    // Find the matching note id from patron_id and loandate and create the note if it does not already exist.
-                    string query = "SELECT id FROM note WHERE patron_id = $patronId AND date = $loanDate";
-                    using (SqliteCommand queryCommand = new SqliteCommand(query, connection)) {
-                        queryCommand.Parameters.AddWithValue("$patronId", patronId);
-                        queryCommand.Parameters.AddWithValue("$loanDate", loanDate.ToString("yyyy-MM-dd"));
-
-                        var result = queryCommand.ExecuteScalar();
-                        if (result == null) {
-                            string append = "INSERT INTO note (patron_id, date, updated) VALUES ($patronId, $date, 0) RETURNING id";
-                            using (SqliteCommand appendCommand = new SqliteCommand(append, connection)) {
-                                appendCommand.Parameters.AddWithValue("$patronId", patronId);
-                                appendCommand.Parameters.AddWithValue("$date", loanDate.ToString("yyyy-MM-dd"));
-
-                                noteId = Convert.ToInt32(appendCommand.ExecuteScalar()!);
-                            }
-                        }
-                        else {
-                            noteId = Convert.ToInt32(result);
-                        }
-                    }
-
-                    // Create note_loan
-                    string insert = "INSERT INTO note_loan (note_id, loan_id) VALUES ($noteId, $loanId)";
-                    using (SqliteCommand insertCommand = new SqliteCommand(insert, connection)) {
-                        insertCommand.Parameters.AddWithValue("$noteId", noteId);
-                        insertCommand.Parameters.AddWithValue("$loanId", loanId);
-
-                        insertCommand.ExecuteNonQuery();
-                    }
-                }
-
-                connection.Close();
-            }
-        }
-        catch (Exception e) {
-            Logger<SQLInterface>.Error("Failed to consolidate loans into notes", e);
-            return 9;
-        }
-
-        return 0;
-    }
-
-    /// <summary>
     /// Helper method that turns a bunch of strings into one tuple.
     /// </summary>
     /// <remarks>[a, b, c] -> (a, b, c)</remarks.>
@@ -377,6 +303,86 @@ public class SQLInterface {
             Logger<SQLInterface>.Error($"Failed to get UserPrimaryIdentifier for {patronId.ToString()}", e);
             return null;
         }
+    }
+
+    /// <summary>
+    /// This method links every loan to a note if not already linked. It works by getting a list of all
+    /// notes that do not have a corresponding note_loan field. And then creating a note if it does not
+    /// already exist for a loan. Then creating a note_loan for the matching loan and note. 
+    /// </summary>
+    /// <remarks>This an important method that acts as it's own module inside of the program.</remarks>
+    /// <returns>Integer overflow.</returns>
+    public static int LinkLoansToNote() {
+        try {
+            using (SqliteConnection sqliteConnection = new SqliteConnection(CONNECTION_STRING)) {
+                sqliteConnection.Open();
+                
+                // Load a datatable that contains all of the loans without a note_loan.    
+                string getAllNonLinkedLoans = SQLCommands.Loan.GET_ALL_NON_LINKED_LOANS;
+                SqliteCommand sqliteCommand = new SqliteCommand(getAllNonLinkedLoans, sqliteConnection);
+                SqliteDataReader dataReader = sqliteCommand.ExecuteReader();
+
+                DataTable nonLinkedLoansTable = new DataTable();
+                nonLinkedLoansTable.Load(dataReader);
+                dataReader.Close();
+
+                // Link Machine
+                foreach (DataRow row in nonLinkedLoansTable.Rows) {
+                    // Throw an exception if loandate is missing.
+                    string? loanDateString = row["loan_date"].ToString();
+                    if (loanDateString == null) {
+                        throw new Exception("No loan_date");
+                    }
+
+                    DateTime loanDate = ParseDates.ConvertStringToDateTime(loanDateString);
+                    int loanId = Convert.ToInt32(row["id"]);
+                    int patronId = Convert.ToInt32(row["patron_id"]);
+                    int noteId = -1;
+
+                    // Find note OR create if it does not already exist.
+                    string noteQuery = SQLCommands.Note.GET_ID;
+                    using (SqliteCommand noteCommand = new SqliteCommand(noteQuery, sqliteConnection)) {
+                        noteCommand.Parameters.AddWithValue("$patronId", patronId);
+                        noteCommand.Parameters.AddWithValue("$loanDate", loanDate);
+
+                        object? result = noteCommand.ExecuteScalar();
+                        if (result == null) {
+                            // Create a note. We cannot use InsertData because we need the noteId.
+
+                            using (SqliteCommand insertNote = new SqliteCommand(
+                                SQLCommands.Note.INSERT_NOTE, sqliteConnection)) {
+                                
+                                insertNote.Parameters.AddWithValue("$patronId", patronId);
+                                insertNote.Parameters.AddWithValue("$loanDate", loanDate);
+
+                                object? insertResult = insertNote.ExecuteScalar();
+                                if (insertResult != null) {
+                                    noteId = Convert.ToInt32(insertResult);
+                                }
+                                else {
+                                    throw new Exception("Failed to insert note.");
+                                }
+                            }
+                        }
+                        else {
+                            noteId = Convert.ToInt32(result);
+                        }
+                    }
+
+                    // Link Note to Loan (cannot use insert data because there is no unique constraint)
+                    string linkLoan = SQLCommands.Note.LINK_LOAN;
+                    using (SqliteCommand linkCommand = new SqliteCommand(linkLoan, sqliteConnection)) {
+                        linkCommand.Parameters.AddWithValue("$noteId", noteId);
+                        linkCommand.Parameters.AddWithValue("$loanId", loanId);
+                    }
+                }
+            }
+        }
+        catch (Exception e) {
+            Logger<SQLInterface>.Error($"Failed to consolidate loans into notes.", e);
+            return 9;
+        }
+        return 0;
     }
 
     /// <summary>This method sets the CONNECTION_STRING.</summary>
