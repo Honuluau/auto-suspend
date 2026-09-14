@@ -129,7 +129,7 @@ public class SQLInterface {
                 string command = SQLCommands.Note.GET_INSTANCE;
                 using (SqliteCommand sqliteCommand = new SqliteCommand(command, connection)) {
 
-                    sqliteCommand.Parameters.AddWithValue("$noteId", noteId);
+                    sqliteCommand.Parameters.AddWithValue("$note_id", noteId);
                     result = Convert.ToInt32(sqliteCommand.ExecuteScalar())!;
                 }
             }
@@ -270,7 +270,7 @@ public class SQLInterface {
 
             // Lengthy declaration because of atypical data type.
             Tuple<string, object>[] parameters = [
-                new Tuple<string, object>("$noteId", noteId)
+                new Tuple<string, object>("$note_id", noteId)
             ];
 
             // Get loans.
