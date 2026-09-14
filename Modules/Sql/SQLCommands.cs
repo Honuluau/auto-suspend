@@ -103,6 +103,12 @@ public class SQLCommands {
         /// <summary>Retrives everything</summary>
         /// <remarks>Requires $table_Name, $column_name, and $var</remarks>
         public static readonly string GET_ID = "SELECT id FROM $table_name WHERE $column_name = $var";
+
+        /// <summary>Method that returns a command that inserts a list of data into table. </summary>
+        /// <remarks>Requires $table_name $columns $placeholders</Remarks>
+        public static string INSERT_DATA(string table_name, string columns, string placeholders) {
+            return $"INSERT INTO {table_name} {columns} VALUES {placeholders}";
+        }
     }
 
     /// <summary> Commands that pertain to items. </summary>

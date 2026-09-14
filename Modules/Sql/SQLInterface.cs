@@ -344,7 +344,7 @@ public class SQLInterface {
 
                     object? result = sqliteCommand.ExecuteScalar();
                     return (result != null) ? result.ToString() : null;
-                }                
+                }
             }
         }
         catch (Exception e) {
@@ -354,6 +354,12 @@ public class SQLInterface {
     }
 
     // [a, b] = (a, b)
+    /// <summary>
+    /// Helper method that turns a bunch of strings into one tuple.
+    /// </summary>
+    /// <remarks>[a, b, c] -> (a, b, c)</remarks.>
+    /// <param name="stringList"></param>
+    /// <returns>SQL Tuple string of strings.</returns>
     public static string ConvertStringListIntoSQLTuple(string[] stringList) {
         string result = "(";
 
@@ -364,7 +370,11 @@ public class SQLInterface {
         return $"{result.Substring(0, result.Length - 2)})";
     }
 
-    // Turn number of variables into an SQL Tuple
+    /// <summary>
+    /// Helper method that turns a bunch of variables into an SQL tuple.
+    /// </summary>
+    /// <param name="count">Amount of variables.</param>
+    /// <returns>SQL Tuple String of placeholders.</returns>
     public static string GetPlaceholdersForSQLTuple(int count) {
         string result = "(";
 
@@ -375,21 +385,33 @@ public class SQLInterface {
         return $"{result.Substring(0, result.Length - 2)})";
     }
 
-    /*
-    Insert one row of information into any table. Columns and Variables should be the same length with matching variables.
-    checkIndex is the variable at x in columns and variables that the method will use to retrieve the id.
-    Automatically checks for duplicates.
-    */
+    /// <summary>
+    /// Insert one row of information into any table. Columns and Variables should be the same length with
+    /// matching variables. "checkIndex" is the variable at x in columns and variables that the method will
+    /// use to retrieve the id. Consider "checkIndex" as the index of any column with a unique constraint. 
+    /// </summary>
+    /// <remarks>This method automatically checks for duplicates and will not add if already found.</remarks>
+    /// <param name="tableName"></param>
+    /// <param name="columns"></param>
+    /// <param name="variables"></param>
+    /// <param name="checkIndex"></param>
+    /// <returns>Integer overflow.</returns>
     public static int InsertData(string tableName, string[] columns, object[] variables, int checkIndex) {
         try {
             int id = GetIdFromTable(tableName, columns[checkIndex], variables[checkIndex]);
-            if (id == 0) // 0 means that there is no id found meaming the data has not been already created.
-            {
+
+            // If the id is 0, then no item was already found.
+            if (id == 0) {
                 using (SqliteConnection connection = new SqliteConnection(CONNECTION_STRING)) {
                     connection.Open();
 
-                    string insertText = $"INSERT INTO {tableName} {ConvertStringListIntoSQLTuple(columns)} VALUES {GetPlaceholdersForSQLTuple(variables.Length)}";
-                    using (SqliteCommand insertCommand = new SqliteCommand(insertText, connection)) {
+                    // Creating the Command.
+                    string columnsTuple = ConvertStringListIntoSQLTuple(columns);
+                    string placeholdersTuple = GetPlaceholdersForSQLTuple(variables.Length);
+                    string query = SQLCommands.Generic.INSERT_DATA(tableName,
+                        columnsTuple, placeholdersTuple);
+
+                    using (SqliteCommand insertCommand = new SqliteCommand(query, connection)) {
                         for (int i = 0; i < variables.Length; i++) {
                             insertCommand.Parameters.AddWithValue($"$var{i}", variables[i]);
                         }
@@ -400,10 +422,10 @@ public class SQLInterface {
                     connection.Close();
                 }
             }
-            else if (id < 0) // Error.
-            {
-                return id;
+            else if (id < 0) {
+                return id; // Error in getting id.
             }
+
             return 0;
         }
         catch (Exception e) {
