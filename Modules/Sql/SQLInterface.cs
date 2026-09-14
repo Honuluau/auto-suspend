@@ -299,29 +299,26 @@ public class SQLInterface {
         }
     }
 
-
-    // Get a row's id from a table in the SQL Database
+    /// <summary>
+    /// This method gets the id of anything in the SQL database pertaining to one table, column, and value.
+    /// </summary>
+    /// <remarks>This method is used for checking to see if rows of data already exist or not 
+    /// in the database.</remarks>
+    /// <param name="tableName">Name of table.</param>
+    /// <param name="columnName">Name of column.</param>
+    /// <param name="variable">Value</param>
+    /// <returns></returns>
     public static int GetIdFromTable(string tableName, string columnName, object variable) {
         try {
             using (SqliteConnection connection = new SqliteConnection(CONNECTION_STRING)) {
                 connection.Open();
 
-                string query = $"SELECT * FROM {tableName} WHERE {columnName} = $var";
+                string query = SQLCommands.Generic.GET_ID;
                 using (SqliteCommand command = new SqliteCommand(query, connection)) {
                     command.Parameters.AddWithValue("$var", variable);
 
-                    SqliteDataReader reader = command.ExecuteReader();
-                    DataTable table = new DataTable();
-                    table.Load(reader);
-
-                    connection.Close();
-
-                    if (table.Rows.Count > 0) {
-                        return Convert.ToInt32(table.Rows[0][0]);
-                    }
-                    else {
-                        return 0;
-                    }
+                    object? result = command.ExecuteScalar();
+                    return (result != null) ? Convert.ToInt32(result) : 0;
                 }
             }
         }
