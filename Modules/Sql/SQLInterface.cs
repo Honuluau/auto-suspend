@@ -328,33 +328,27 @@ public class SQLInterface {
         }
     }
 
-    /*
-    This method gets the UserPrimaryIdentifier from a patronId.
-    Check for NULL value for failure.
-    */
+    /// <summary>
+    /// This method gets the UserPrimaryIdentifier of a patron in the database.
+    /// </summary>
+    /// <param name="patronId">Database Id for Patron.</param>
+    /// <returns>UserPrimaryIdentifier</returns>
     public static string? GetUserPrimaryIdentifier(int patronId) {
         try {
-            using (SqliteConnection connection = new SqliteConnection(CONNECTION_STRING)) {
-                connection.Open();
+            using (SqliteConnection sqliteConnection = new SqliteConnection(CONNECTION_STRING)) {
+                sqliteConnection.Open();
 
-                using (SqliteCommand command = new SqliteCommand("SELECT user_primary_identifier FROM patron WHERE id = $patron_id", connection)) {
-                    command.Parameters.AddWithValue("$patron_id", patronId);
-                    SqliteDataReader reader = command.ExecuteReader();
-                    DataTable table = new DataTable();
-                    table.Load(reader);
+                string query = SQLCommands.Patron.GET_USER_PRIMARY_IDENTIFIER;
+                using (SqliteCommand sqliteCommand = new SqliteCommand(query, sqliteConnection)) {
+                    sqliteCommand.Parameters.AddWithValue("$patron_id", patronId);
 
-                    connection.Close();
-
-                    if (table.Rows.Count > 0) {
-                        return table.Rows[0][0].ToString();
-                    }
-
-                    return null;
-                }
+                    object? result = sqliteCommand.ExecuteScalar();
+                    return (result != null) ? result.ToString() : null;
+                }                
             }
         }
         catch (Exception e) {
-            Logger<SQLInterface>.Error($"Failed to get UserPrimaryIdentifier for {patronId.ToString()}.", e);
+            Logger<SQLInterface>.Error($"Failed to get UserPrimaryIdentifier for {patronId.ToString()}", e);
             return null;
         }
     }

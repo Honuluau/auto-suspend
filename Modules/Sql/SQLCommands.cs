@@ -101,12 +101,14 @@ public class SQLCommands {
     /// <summary> Commands that pertain to all tables. </summary>
     public class Generic {
         /// <summary>Retrives everything</summary>
+        /// <remarks>Requires $table_Name, $column_name, and $var</remarks>
         public static readonly string GET_ID = "SELECT id FROM $table_name WHERE $column_name = $var";
     }
 
     /// <summary> Commands that pertain to items. </summary>
     public class Item {
         /// <summary>Gets an item by it's corresponding id.</summary>
+        /// <remarks>Requires $id</remarks>
         public static readonly string GET_ITEM_FROM_ID = "SELECT * FROM item WHERE id = $id";
     }
 
@@ -118,6 +120,7 @@ public class SQLCommands {
             WHERE return_date IS NULL
         """;
 
+        /// <remarks>Requires $note_id</remarks>
         public static readonly string GET_LOANS_FOR_NOTE = """
             SELECT *
             FROM loan
@@ -126,10 +129,10 @@ public class SQLCommands {
         """;
     }
 
-    /// <summary> Commands that pertain to notes.</summary>
+    /// <summary> Commands that pertain to notes. </summary>
     public class Note {
         /// <summary>Gets the current instance per note id.</summary>
-        /// <remarks>Requires $noteId</remarks> 
+        /// <remarks>Requires $note_id</remarks> 
         public static readonly string GET_INSTANCE = """
             SELECT row_num 
             FROM ( 
@@ -139,7 +142,18 @@ public class SQLCommands {
                     ROW_NUMBER() OVER (PARTITION BY patron_id ORDER BY id) AS row_num
                 FROM note 
             )
-            WHERE id = $noteId
+            WHERE id = $note_id
+        """;
+    }
+
+    // <summary> Commands that pertain to patrons. </summary>
+    public class Patron {
+        /// <summary>Gets the UserPrimaryIdentifier of a patron.</summary>
+        /// <remarks>Requires $patron_id</remarks>
+        public static readonly string GET_USER_PRIMARY_IDENTIFIER = """
+            SELECT user_primary_identifier
+            FROM patrons
+            WHERE id = $patron_id
         """;
     }
 }
