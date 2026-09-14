@@ -1,47 +1,15 @@
 using System.Data;
 using Microsoft.Data.Sqlite;
 
+/// <summary>This class is the SOLE interface between the modules and the database. </summary>
+/// <remarks>All commands it uses can be found in SQLCommands.</remarks>
 public class SQLInterface {
     public static string CONNECTION_STRING { get; set; } = "";
 
-    /// <summary>This method sets the CONNECTION_STRING.</summary>
-    /// <param name="dbPath">Path to database file.</param>
-    public static void Initialize(String dbPath) {
-        CONNECTION_STRING = $"Data Source={dbPath}";
-    }
-
     /// <summary>
-    /// This method creates all of the tables that do not already exist inside the database.
+    /// Consolidate loans.
     /// </summary>
-    /// <returns>Integer overflow.</returns>
-    public static int CreateSqliteDB() {
-        Logger<SQLInterface>.Log("SQL initialization sequence started.", LogLevel.Info);
-
-        try {
-            using (SqliteConnection connection = new SqliteConnection(CONNECTION_STRING)) {
-                connection.Open();
-
-                // Create tables.
-                foreach (string command in SQLCommands.CreateTable.CREATE_TABLE_COMMANDS) {
-                    using SqliteCommand sqliteCommand = new SqliteCommand(command, connection);
-                    sqliteCommand.ExecuteNonQuery();
-                }
-            }
-
-            Logger<SQLInterface>.Log("SQL initialized successfully.", LogLevel.Info);
-        }
-        catch (Exception e) {
-            Logger<SQLInterface>.Error("Failed to Initialize SQL database", e);
-            return 8;
-        }
-
-        return 0;
-    }
-
-    /*
-    This method pairs loans to their notes in SQL.
-    If a loan's note does not exist, it will create a note for the loan.
-    */
+    /// <returns></returns>
     public static int ConsolidateLoans() {
         Logger<SQLInterface>.Log($"Consolidating loans into notes: {CONNECTION_STRING}", LogLevel.Info);
         try {
@@ -113,6 +81,95 @@ public class SQLInterface {
     }
 
     /// <summary>
+    /// Helper method that turns a bunch of strings into one tuple.
+    /// </summary>
+    /// <remarks>[a, b, c] -> (a, b, c)</remarks.>
+    /// <param name="stringList"></param>
+    /// <returns>SQL Tuple string of strings.</returns>
+    public static string ConvertStringListIntoSQLTuple(string[] stringList) {
+        string result = "(";
+
+        foreach (string str in stringList) {
+            result = $"{result}{str}, ";
+        }
+
+        return $"{result.Substring(0, result.Length - 2)})";
+    }
+
+    /// <summary>
+    /// This method creates all of the tables that do not already exist inside the database.
+    /// </summary>
+    /// <returns>Integer overflow.</returns>
+    public static int CreateSqliteDB() {
+        Logger<SQLInterface>.Log("SQL initialization sequence started.", LogLevel.Info);
+
+        try {
+            using (SqliteConnection connection = new SqliteConnection(CONNECTION_STRING)) {
+                connection.Open();
+
+                // Create tables.
+                foreach (string command in SQLCommands.CreateTable.CREATE_TABLE_COMMANDS) {
+                    using SqliteCommand sqliteCommand = new SqliteCommand(command, connection);
+                    sqliteCommand.ExecuteNonQuery();
+                }
+            }
+
+            Logger<SQLInterface>.Log("SQL initialized successfully.", LogLevel.Info);
+        }
+        catch (Exception e) {
+            Logger<SQLInterface>.Error("Failed to Initialize SQL database", e);
+            return 8;
+        }
+
+        return 0;
+    }
+
+    /// <summary>
+    /// This method gets all loans in the SQL database that do not have a return_date.
+    /// </summary>
+    /// <returns>List of unreturned loans.</returns>
+    public static Loan[]? GetAllNonReturnedLoans() {
+        try {
+            string query = SQLCommands.Loan.GET_ALL_NON_RETURNED_LOANS;
+            Loan[]? loans = GetLoans(query, null);
+            return loans;
+        }
+        catch (Exception e) {
+            Logger<SQLInterface>.Error("An error occurred retrieving all loans.", e);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// This method gets the id of anything in the SQL database pertaining to one table, column, and value.
+    /// </summary>
+    /// <remarks>This method is used for checking to see if rows of data already exist or not 
+    /// in the database.</remarks>
+    /// <param name="tableName">Name of table.</param>
+    /// <param name="columnName">Name of column.</param>
+    /// <param name="variable">Value</param>
+    /// <returns></returns>
+    public static int GetIdFromTable(string tableName, string columnName, object variable) {
+        try {
+            using (SqliteConnection connection = new SqliteConnection(CONNECTION_STRING)) {
+                connection.Open();
+
+                string query = SQLCommands.Generic.GET_ID;
+                using (SqliteCommand command = new SqliteCommand(query, connection)) {
+                    command.Parameters.AddWithValue("$var", variable);
+
+                    object? result = command.ExecuteScalar();
+                    return (result != null) ? Convert.ToInt32(result) : 0;
+                }
+            }
+        }
+        catch (Exception e) {
+            Logger<SQLInterface>.Error($"Failed to get {tableName} id from {columnName} = {variable}", e);
+            return -21;
+        }
+    }
+
+    /// <summary>
     /// Gets the instance of a note using it's corresponding note id. An instance is the ordinal position of 
     /// a note within a patron's note history. The first note recorded for a patron is instance #1, the 
     /// second is instance #2.
@@ -139,21 +196,6 @@ public class SQLInterface {
         }
 
         return result;
-    }
-
-    /// <summary>
-    /// Translates a datarow into an Item class.
-    /// </summary>
-    /// <param name="row">Datarow from sqlite command.</param>
-    /// <returns>An <see cref="Item"/> instance populated from row.</returns>
-    public static Item GetItemFromRow(DataRow row) {
-        int id = Convert.ToInt32(row["id"]);
-        string mmsId = row["mms_id"].ToString()!;
-        string barcode = row["barcode"].ToString()!;
-        string title = row["title"].ToString()!;
-        string description = row["description"].ToString()!;
-
-        return new Item(id, mmsId, barcode, title, description);
     }
 
     /// <summary>
@@ -187,7 +229,20 @@ public class SQLInterface {
         }
     }
 
+    /// <summary>
+    /// Translates a datarow into an Item class.
+    /// </summary>
+    /// <param name="row">Datarow from sqlite command.</param>
+    /// <returns>An <see cref="Item"/> instance populated from row.</returns>
+    public static Item GetItemFromRow(DataRow row) {
+        int id = Convert.ToInt32(row["id"]);
+        string mmsId = row["mms_id"].ToString()!;
+        string barcode = row["barcode"].ToString()!;
+        string title = row["title"].ToString()!;
+        string description = row["description"].ToString()!;
 
+        return new Item(id, mmsId, barcode, title, description);
+    }
 
     /// <summary>
     /// Translates a datarow into a <see cref="Loan"/>.
@@ -284,49 +339,20 @@ public class SQLInterface {
     }
 
     /// <summary>
-    /// This method gets all loans in the SQL database that do not have a return_date.
+    /// Helper method that turns a bunch of variables into an SQL tuple.
     /// </summary>
-    /// <returns>List of unreturned loans.</returns>
-    public static Loan[]? GetAllNonReturnedLoans() {
-        try {
-            string query = SQLCommands.Loan.GET_ALL_NON_RETURNED_LOANS;
-            Loan[]? loans = GetLoans(query, null);
-            return loans;
+    /// <param name="count">Amount of variables.</param>
+    /// <returns>SQL Tuple String of placeholders.</returns>
+    public static string GetPlaceholdersForSQLTuple(int count) {
+        string result = "(";
+
+        for (int i = 0; i < count; i++) {
+            result = $"{result}$var{i}, ";
         }
-        catch (Exception e) {
-            Logger<SQLInterface>.Error("An error occurred retrieving all loans.", e);
-            return null;
-        }
+
+        return $"{result.Substring(0, result.Length - 2)})";
     }
 
-    /// <summary>
-    /// This method gets the id of anything in the SQL database pertaining to one table, column, and value.
-    /// </summary>
-    /// <remarks>This method is used for checking to see if rows of data already exist or not 
-    /// in the database.</remarks>
-    /// <param name="tableName">Name of table.</param>
-    /// <param name="columnName">Name of column.</param>
-    /// <param name="variable">Value</param>
-    /// <returns></returns>
-    public static int GetIdFromTable(string tableName, string columnName, object variable) {
-        try {
-            using (SqliteConnection connection = new SqliteConnection(CONNECTION_STRING)) {
-                connection.Open();
-
-                string query = SQLCommands.Generic.GET_ID;
-                using (SqliteCommand command = new SqliteCommand(query, connection)) {
-                    command.Parameters.AddWithValue("$var", variable);
-
-                    object? result = command.ExecuteScalar();
-                    return (result != null) ? Convert.ToInt32(result) : 0;
-                }
-            }
-        }
-        catch (Exception e) {
-            Logger<SQLInterface>.Error($"Failed to get {tableName} id from {columnName} = {variable}", e);
-            return -21;
-        }
-    }
 
     /// <summary>
     /// This method gets the UserPrimaryIdentifier of a patron in the database.
@@ -353,36 +379,10 @@ public class SQLInterface {
         }
     }
 
-    // [a, b] = (a, b)
-    /// <summary>
-    /// Helper method that turns a bunch of strings into one tuple.
-    /// </summary>
-    /// <remarks>[a, b, c] -> (a, b, c)</remarks.>
-    /// <param name="stringList"></param>
-    /// <returns>SQL Tuple string of strings.</returns>
-    public static string ConvertStringListIntoSQLTuple(string[] stringList) {
-        string result = "(";
-
-        foreach (string str in stringList) {
-            result = $"{result}{str}, ";
-        }
-
-        return $"{result.Substring(0, result.Length - 2)})";
-    }
-
-    /// <summary>
-    /// Helper method that turns a bunch of variables into an SQL tuple.
-    /// </summary>
-    /// <param name="count">Amount of variables.</param>
-    /// <returns>SQL Tuple String of placeholders.</returns>
-    public static string GetPlaceholdersForSQLTuple(int count) {
-        string result = "(";
-
-        for (int i = 0; i < count; i++) {
-            result = $"{result}$var{i}, ";
-        }
-
-        return $"{result.Substring(0, result.Length - 2)})";
+    /// <summary>This method sets the CONNECTION_STRING.</summary>
+    /// <param name="dbPath">Path to database file.</param>
+    public static void Initialize(String dbPath) {
+        CONNECTION_STRING = $"Data Source={dbPath}";
     }
 
     /// <summary>
