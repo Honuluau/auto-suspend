@@ -283,10 +283,13 @@ public class SQLInterface {
         }
     }
 
-    // Get all loans that have a null value in return_date.
+    /// <summary>
+    /// This method gets all loans in the SQL database that do not have a return_date.
+    /// </summary>
+    /// <returns>List of unreturned loans.</returns>
     public static Loan[]? GetAllNonReturnedLoans() {
         try {
-            string query = "SELECT * FROM loan WHERE return_date IS NULL";
+            string query = SQLCommands.Loan.GET_ALL_NON_RETURNED_LOANS;
             Loan[]? loans = GetLoans(query, null);
             return loans;
         }
