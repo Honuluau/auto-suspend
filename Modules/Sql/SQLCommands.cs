@@ -150,6 +150,16 @@ public class SQLCommands {
             )
             WHERE id = $note_id
         """;
+
+        /// <summary>Updates a notes status.</summary>
+        /// <remarks>Requires $status and $id.</remarks>
+        public static readonly String UPDATE_STATUS = """
+            UPDATE note
+            SET
+                status = $status,
+                updated = 0
+            WHERE id = $id
+        """;
     }
 
     // <summary> Commands that pertain to patrons. </summary>

@@ -434,22 +434,24 @@ public class SQLInterface {
         }
     }
 
-
-
+    /// <summary>
+    /// This method updates a notes status and marks it to be updated in Alma.
+    /// </summary>
+    /// <param name="noteId">Database Id.</param>
+    /// <param name="status">New status.</param>
+    /// <returns></returns>
     public static int SetNoteStatus(int noteId, StatusType status) {
         try {
             using (SqliteConnection connection = new SqliteConnection(CONNECTION_STRING)) {
                 connection.Open();
 
-                string setCommand = "UPDATE note SET status = $status, updated = $updated WHERE id = $id";
-
-                using (SqliteCommand command = new SqliteCommand(setCommand, connection)) {
+                string query = SQLCommands.Note.UPDATE_STATUS;
+                using (SqliteCommand command = new SqliteCommand(query, connection)) {
                     command.Parameters.AddWithValue("$status", status.ToString());
                     command.Parameters.AddWithValue("$updated", 0);
                     command.Parameters.AddWithValue("$id", noteId);
 
                     command.ExecuteNonQuery();
-                    connection.Close();
                 }
             }
         }
