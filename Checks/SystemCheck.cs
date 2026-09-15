@@ -25,6 +25,7 @@ public class SystemCheck {
             builder.Append(FileSizeHelper.GetReadableFileSize(availableFreeSpace));
             builder.Append(" of storage which is less than 1MB.");
 
+
             Logger<SystemCheck>.Log(builder.ToString(), LogLevel.Error);
             return 2;
         }
