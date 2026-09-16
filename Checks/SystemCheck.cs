@@ -13,24 +13,21 @@ public class SystemCheck {
     /// This method checks to see if there is at least 1 MB of storage of the current Auto-Suspend directory.
     /// </summary>
     /// <returns>Integer overflow.</returns>
-    public static int CheckAvailableStorage() {
+    public static void CheckAvailableStorage() {
         string currentDirectory = Directory.GetCurrentDirectory()!;
         DriveInfo drive = new DriveInfo(Path.GetPathRoot(currentDirectory)!);
         long availableFreeSpace = drive.AvailableFreeSpace;
 
         if (drive.AvailableFreeSpace < 1000000) // 1 MB
         {
-            StringBuilder builder = new StringBuilder(drive.Name);
+            StringBuilder builder = new StringBuilder();
+            builder.Append("There is not enough space on the executing drive.");
+            builder.Append(drive.Name);
             builder.Append(" has ");
             builder.Append(FileSizeHelper.GetReadableFileSize(availableFreeSpace));
             builder.Append(" of storage which is less than 1MB.");
 
-
-            Logger<SystemCheck>.Log(builder.ToString(), LogLevel.Error);
-            return 2;
-        }
-        else {
-            return 0;
+            throw new InsufficientMemoryException(builder.ToString());
         }
     }
 
@@ -86,21 +83,11 @@ public class SystemCheck {
     /// </summary>
     /// <param name="httpClient">Standard httpClient that Auto-Suspend holds in httpClientHouse.</param>
     /// <returns>Integer overflow.</returns>
-    public static async Task<bool> CheckInternetConnection(HttpClient httpClient) {
-        try {
-            HttpResponseMessage response = await httpClient.GetAsync("http://www.google.com");
+    public static async Task CheckInternetConnection(HttpClient httpClient) {
+        HttpResponseMessage response = await httpClient.GetAsync("http://www.google.com");
 
-            if (response.IsSuccessStatusCode) {
-                return true;
-            }
-            else {
-                Logger<SystemCheck>.Log("No internet.", LogLevel.Error);
-                return false;
-            }
-        }
-        catch (Exception e) {
-            Logger<SystemCheck>.Error("No internet", e);
-            return false;
+        if (!response.IsSuccessStatusCode) {
+            throw new FailedInternetConnectionException("Response had no success code.");
         }
     }
 
@@ -110,31 +97,29 @@ public class SystemCheck {
     /// </summary>
     /// <param name="path">Main Auto-Suspend path.</param>
     /// <returns>Integer overflow</returns>
-    public static async Task<int> CheckSystem(string path) {
+    public static async Task CheckSystem(string path) {
         HttpClient httpClient = HttpClientHouse.GetHttpClient();
 
-        bool online = await CheckInternetConnection(httpClient);
-        if (!online) {
-            return 2;
+        try {
+            await CheckInternetConnection(httpClient);
+            CheckAvailableStorage();
         }
-
-        int availableStorage = CheckAvailableStorage();
-        if (availableStorage != 0) {
-            return availableStorage;
+        catch {
+            return;
         }
+        await CheckInternetConnection(httpClient);
+        CheckAvailableStorage();
 
         int directories = CheckDirectories(path);
         if (directories != 0) {
-            return directories;
+            throw new Exception();
         }
 
         int checkFiles = CheckFiles(path);
         if (checkFiles != 0) {
-            return checkFiles;
+            throw new Exception();
         }
 
         Logger<SystemCheck>.Log("System check complete, no errors found.", LogLevel.Info);
-
-        return 0;
     }
 }

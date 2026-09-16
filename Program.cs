@@ -9,25 +9,14 @@ public class AutoSuspend
 
     static async Task<int> Routine(String[] args)
     {
-        // System Check
-        int systemWorks = await SystemCheck.CheckSystem(AUTO_SUSPEND_PATH);
-        if (systemWorks != 0)
-        {
-            return systemWorks;
+        try {
+            await SystemCheck.CheckSystem(AUTO_SUSPEND_PATH);
+            DataCheck.AssertDatabase(AUTO_SUSPEND_PATH);
+            SensitiveInfo.Init();
         }
-
-        // Data Check
-        int dataWorks = DataCheck.CheckData(AUTO_SUSPEND_PATH);
-        if (dataWorks != 0)
-        {
-            return dataWorks;
-        }
-
-        // Sensitive Info Check
-        int sensitiveInfo = SensitiveInfo.Init();
-        if (sensitiveInfo != 0)
-        {
-            return sensitiveInfo;
+        catch (Exception e) {
+            Logger<AutoSuspend>.Error("Auto-Suspend has failed the pre-check.", e);
+            throw new Exception("Auto-Suspend has failed the pre-check", e);
         }
 
         // Development Stuff -- Subject to Change
@@ -130,16 +119,14 @@ public class AutoSuspend
             return 1; // No error log necessary because it is handled through Logger itself.
         }
 
-        // A way to end the program with logger.
-        int successfulRoutine = await Routine(args);
-        if (successfulRoutine != 0)
-        {
-            Logger<AutoSuspend>.Log($"Auto-Suspend ended with error code: {successfulRoutine}", LogLevel.Error);
+        // Routine.
+        try {
+            await Routine(args);
         }
-        else
-        {
-            Logger<AutoSuspend>.Log($"Auto-Suspend ended without errors.", LogLevel.Info);
-            return 0;
+        catch (Exception e) {
+            Logger<AutoSuspend>.Error($"Auto-Suspend "
+                + "has recieved an unhandled exception and is shutting down.", e);
+            return 1;
         }
 
         return 0;
